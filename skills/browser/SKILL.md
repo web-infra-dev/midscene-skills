@@ -35,6 +35,8 @@ allowed-tools:
 
 Automate web browsing using `npx @midscene/web@1`. Launches a headless Chrome via Puppeteer that **persists across CLI calls** — no session loss between commands. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
 
+If the task spans multiple CLI calls and the user wants **one merged report**, you MUST choose a stable `--sessionId`, reuse it on every command, then run `export_session_report` at the end to assemble the final HTML report.
+
 ## When to Use
 
 Use this skill when:
@@ -100,6 +102,12 @@ If the model is not configured, ask the user to set it up. See [Model Configurat
 npx @midscene/web@1 connect --url https://example.com
 ```
 
+When the task needs a merged report, start the flow with a stable session id:
+
+```bash
+npx @midscene/web@1 connect --url https://example.com --sessionId release-check
+```
+
 ### Take Screenshot
 
 ```bash
@@ -107,6 +115,12 @@ npx @midscene/web@1 take_screenshot
 ```
 
 After taking a screenshot, read the saved image file to understand the current page state before deciding the next action.
+
+If you are in a session-report workflow, keep passing the same session id:
+
+```bash
+npx @midscene/web@1 take_screenshot --sessionId release-check
+```
 
 ### Perform Action
 
@@ -120,6 +134,34 @@ npx @midscene/web@1 act --prompt "scroll down and click the Submit button"
 # or target-driven instructions
 npx @midscene/web@1 act --prompt "click the country dropdown and select Japan"
 ```
+
+For multi-command verification that must be merged into one report, every `act` call must reuse the same `--sessionId`:
+
+```bash
+npx @midscene/web@1 act --prompt "type release-check in the Name input field" --sessionId release-check
+npx @midscene/web@1 act --prompt "click the Complete Flow button" --sessionId release-check
+```
+
+### Export Session Report
+
+Use this when the user wants a merged report covering multiple CLI calls:
+
+```bash
+npx @midscene/web@1 export_session_report --sessionId release-check
+```
+
+This command assembles the persisted session executions into a single HTML report and prints the generated report path.
+
+### Open a Generated Report
+
+After exporting, open the generated HTML report and inspect it like any other page:
+
+```bash
+npx @midscene/web@1 connect --url "file:///absolute/path/to/report/index.html"
+npx @midscene/web@1 take_screenshot
+```
+
+Use this final screenshot pass to verify that the merged report actually renders the expected executions.
 
 ### Disconnect
 
@@ -147,6 +189,17 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 4. **Close** the browser when done (or **disconnect** to keep it for later)
 5. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
+If the user explicitly asks for a merged report or asks to verify multiple CLI calls in one report, use this extended pattern instead:
+
+1. **Choose one `sessionId` up front** and reuse it for every command in the flow.
+2. **Connect** with `--sessionId` to open the target page.
+3. **Take screenshot** and inspect the current state before acting.
+4. **Run one or more `act` commands** with the same `--sessionId`.
+5. **Export the merged report** with `export_session_report --sessionId ...`.
+6. **Open the generated report HTML** and take another screenshot to verify it renders correctly.
+7. **Close** the browser when done.
+8. **Report results** with the session id, report path, screenshot paths, and whether the merged report looked correct.
+
 ## Best Practices
 
 1. **Always connect first**: Navigate to the target URL with `connect --url` before any interaction.
@@ -157,6 +210,9 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 6. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 7. **Batch related operations into a single `act` command**: When performing consecutive operations within the same page, combine them into one `act` prompt instead of splitting them into separate commands. For example, "fill in the email and password fields, then click the Login button" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
 8. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
+9. **Use `--sessionId` for multi-command verification**: If the task involves multiple CLI calls that must be merged into one report, define one stable session id at the beginning and pass it to every command that supports it.
+10. **Export only after all actions are done**: `export_session_report` is the assembly step. Do not run it before the final action if the user expects one complete merged report.
+11. **Open the exported report and check it visually**: Do not stop after seeing the report file path. Load the generated `report/index.html`, take a screenshot, and verify that the merged result actually renders.
 
 **Example — Dropdown selection:**
 
@@ -169,6 +225,18 @@ npx @midscene/web@1 take_screenshot
 
 ```bash
 npx @midscene/web@1 act --prompt "fill in the email field with 'user@example.com' and the password field with 'pass123', then click the Log In button"
+npx @midscene/web@1 take_screenshot
+```
+
+**Example — Multi-command flow with one merged report:**
+
+```bash
+npx @midscene/web@1 connect --url http://127.0.0.1:8766 --sessionId release-check
+npx @midscene/web@1 take_screenshot --sessionId release-check
+npx @midscene/web@1 act --prompt "type release-check in the Name input field" --sessionId release-check
+npx @midscene/web@1 act --prompt "click the Complete Flow button" --sessionId release-check
+npx @midscene/web@1 export_session_report --sessionId release-check
+npx @midscene/web@1 connect --url "file:///absolute/path/to/report/index.html"
 npx @midscene/web@1 take_screenshot
 ```
 
