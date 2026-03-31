@@ -140,6 +140,25 @@ npx @midscene/harmony@1 act --prompt "long press the message bubble and tap Dele
 npx @midscene/harmony@1 act --prompt "open Settings and navigate to Wi-Fi settings, tell me the connected network name"
 ```
 
+### Use a Reference Image for Precise Targeting
+
+When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
+
+```bash
+npx @midscene/harmony@1 tap --locate '{
+  "prompt": "tap the area contains the image",
+  "images": [
+    {
+      "name": "target image",
+      "url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"
+    }
+  ],
+  "convertHttpImage2Base64": true
+}'
+```
+
+The same `locate` JSON shape also works for other commands that accept a `locate` parameter.
+
 ### Disconnect
 
 ```bash
@@ -163,6 +182,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 4. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 5. **Batch related operations into a single `act` command**: When performing consecutive operations within the same app, combine them into one `act` prompt instead of splitting them into separate commands. For example, "open Settings, tap Wi-Fi, and toggle it on" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
 6. **Summarize report files after completion**: After finishing the automation task, collect and summarize all report files (screenshots, logs, output files, etc.) for the user. Present a clear summary of what was accomplished, what files were generated, and where they are located, making it easy for the user to review the results.
+7. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — App launch and interaction:**
 
