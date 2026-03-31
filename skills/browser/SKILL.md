@@ -185,6 +185,25 @@ npx @midscene/web@1 act --prompt "scroll down and click the Submit button"
 npx @midscene/web@1 act --prompt "click the country dropdown and select Japan"
 ```
 
+### Use a Reference Image for Precise Targeting
+
+When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
+
+```bash
+npx @midscene/web@1 tap --locate '{
+  "prompt": "tap the area contains the image",
+  "images": [
+    {
+      "name": "target image",
+      "url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"
+    }
+  ],
+  "convertHttpImage2Base64": true
+}'
+```
+
+The same `locate` JSON shape also works for other commands that accept a `locate` parameter.
+
 ### Disconnect
 
 Disconnect from the page but keep the browser running:
@@ -221,6 +240,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 6. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 7. **Batch related operations into a single `act` command**: When performing consecutive operations within the same page, combine them into one `act` prompt instead of splitting them into separate commands. For example, "fill in the email and password fields, then click the Login button" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
 8. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
+9. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — Dropdown selection:**
 

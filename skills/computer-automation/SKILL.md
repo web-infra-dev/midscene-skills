@@ -114,6 +114,25 @@ npx @midscene/computer@1 act --prompt "drag the file icon to the Trash"
 npx @midscene/computer@1 act --prompt "search for the weather in Shanghai using the Chrome browser, tell me the result"
 ```
 
+### Use a Reference Image for Precise Targeting
+
+When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
+
+```bash
+npx @midscene/computer@1 tap --locate '{
+  "prompt": "tap the area contains the image",
+  "images": [
+    {
+      "name": "target image",
+      "url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"
+    }
+  ],
+  "convertHttpImage2Base64": true
+}'
+```
+
+The same `locate` JSON shape also works for other commands that accept a `locate` parameter.
+
 ### Disconnect
 
 ```bash
@@ -146,6 +165,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
    ```
    This prevents screenshot failures caused by missing system utilities.
 9. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
+10. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — Context menu interaction:**
 
