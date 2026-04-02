@@ -66,7 +66,7 @@ curl -s --max-time 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:3766/socket
 **How to use precheck results:**
 - CDP returns `101` → CDP mode is available, use `--cdp`
 - Bridge returns `200` or `400` → Bridge extension is listening, use `--bridge`
-- Both fail → fall back to Puppeteer mode, or ask the user to enable remote debugging
+- Both fail → Chrome may not be running. Try opening Chrome using a shell command appropriate for the current platform, wait 2-3 seconds, then re-run the precheck. If it still fails, fall back to Puppeteer mode or ask the user to check their Chrome settings.
 - Both available and user didn't specify → prefer CDP
 
 ## Prerequisites
