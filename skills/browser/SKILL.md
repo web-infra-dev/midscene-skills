@@ -220,6 +220,18 @@ Close the browser completely when finished (Puppeteer mode only):
 npx @midscene/web@1 close
 ```
 
+
+### Consume Report Files
+
+The generated HTML report is recommended for human reading first. It includes step-by-step execution details and replay videos for each operation, which makes it much easier to understand what happened and troubleshoot problems.
+
+If another skill or tool needs to consume the report, first convert it with `report-tool` from the same platform CLI package. Prefer Markdown for LLM-based workflows. Use JSON when the report needs to be processed programmatically.
+
+```bash
+npx @midscene/web@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
+npx @midscene/web@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
+```
+
 ## Workflow Pattern
 
 The browser **persists across CLI calls** via a background Chrome process. Follow this pattern:
