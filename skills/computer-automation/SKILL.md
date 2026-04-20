@@ -26,7 +26,7 @@ allowed-tools:
 > 4. **Always report task results before finishing.** After completing the automation task, you MUST proactively summarize the results to the user — including key data found, actions completed, screenshots taken, and any relevant findings. Never silently end after the last automation step; the user expects a complete response in a single interaction.
 > 5. **Only minimize windows, never close them unless explicitly asked.** When you need to dismiss or get a window out of the way, minimize it instead of closing it. Do not close any app or window unless the user explicitly asks you to do so.
 
-Control your desktop (macOS, Windows, Linux) using `npx @midscene/computer@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
+Control your desktop (macOS, Windows, Linux) using `npx -y @midscene/computer@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
 
 ## What `act` Can Do
 
@@ -84,20 +84,20 @@ If the model is not configured, ask the user to set it up. See [Model Configurat
 ### Connect to Desktop
 
 ```bash
-npx @midscene/computer@1 connect
-npx @midscene/computer@1 connect --displayId <id>
+npx -y @midscene/computer@1 connect
+npx -y @midscene/computer@1 connect --displayId <id>
 ```
 
 ### List Displays
 
 ```bash
-npx @midscene/computer@1 list_displays
+npx -y @midscene/computer@1 list_displays
 ```
 
 ### Take Screenshot
 
 ```bash
-npx @midscene/computer@1 take_screenshot
+npx -y @midscene/computer@1 take_screenshot
 ```
 
 After taking a screenshot, read the saved image file to understand the current screen state before deciding the next action.
@@ -108,11 +108,11 @@ Use `act` to interact with the computer and get the result. It autonomously hand
 
 ```bash
 # specific instructions
-npx @midscene/computer@1 act --prompt "type hello world in the search field and press Enter"
-npx @midscene/computer@1 act --prompt "drag the file icon to the Trash"
+npx -y @midscene/computer@1 act --prompt "type hello world in the search field and press Enter"
+npx -y @midscene/computer@1 act --prompt "drag the file icon to the Trash"
 
 # or target-driven instructions
-npx @midscene/computer@1 act --prompt "search for the weather in Shanghai using the Chrome browser, tell me the result"
+npx -y @midscene/computer@1 act --prompt "search for the weather in Shanghai using the Chrome browser, tell me the result"
 ```
 
 ### Use a Reference Image for Precise Targeting
@@ -120,7 +120,7 @@ npx @midscene/computer@1 act --prompt "search for the weather in Shanghai using 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
 
 ```bash
-npx @midscene/computer@1 tap --locate '{
+npx -y @midscene/computer@1 tap --locate '{
   "prompt": "tap the area contains the image",
   "images": [
     {
@@ -137,7 +137,7 @@ The same `locate` JSON shape also works for other commands that accept a `locate
 ### Disconnect
 
 ```bash
-npx @midscene/computer@1 disconnect
+npx -y @midscene/computer@1 disconnect
 ```
 
 ### Consume Report Files
@@ -147,8 +147,8 @@ The generated HTML report is recommended for human reading first. It includes st
 If another skill or tool needs to consume the report, first convert it with `report-tool` from the same platform CLI package. Prefer Markdown for LLM-based workflows. Use JSON when the report needs to be processed programmatically.
 
 ```bash
-npx @midscene/computer@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
-npx @midscene/computer@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
+npx -y @midscene/computer@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
+npx -y @midscene/computer@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
 ```
 
 ## Workflow Pattern
@@ -182,15 +182,15 @@ Since CLI commands are stateless between invocations, follow this pattern:
 **Example — Context menu interaction:**
 
 ```bash
-npx @midscene/computer@1 act --prompt "right-click the file icon and select Delete from the context menu"
-npx @midscene/computer@1 take_screenshot
+npx -y @midscene/computer@1 act --prompt "right-click the file icon and select Delete from the context menu"
+npx -y @midscene/computer@1 take_screenshot
 ```
 
 **Example — Dropdown menu:**
 
 ```bash
-npx @midscene/computer@1 act --prompt "open the File menu and click New Window"
-npx @midscene/computer@1 take_screenshot
+npx -y @midscene/computer@1 act --prompt "open the File menu and click New Window"
+npx -y @midscene/computer@1 take_screenshot
 ```
 
 

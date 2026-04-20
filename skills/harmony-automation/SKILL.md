@@ -23,7 +23,7 @@ allowed-tools:
 > 2. **Run only one midscene command at a time.** Wait for the previous command to finish, read the screenshot, then decide the next action. Never chain multiple commands together.
 > 3. **Allow enough time for each command to complete.** Midscene commands involve AI inference and screen interaction, which can take longer than typical shell commands. A typical command needs about 1 minute; complex `act` commands may need even longer.
 
-Automate HarmonyOS NEXT devices using `npx @midscene/harmony@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
+Automate HarmonyOS NEXT devices using `npx -y @midscene/harmony@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
 
 ## What `act` Can Do
 
@@ -95,8 +95,8 @@ hdc list targets
 ### Connect to Device
 
 ```bash
-npx @midscene/harmony@1 connect
-npx @midscene/harmony@1 connect --deviceId 0123456789ABCDEF
+npx -y @midscene/harmony@1 connect
+npx -y @midscene/harmony@1 connect --deviceId 0123456789ABCDEF
 ```
 
 ### Launch an App or URL
@@ -104,9 +104,9 @@ npx @midscene/harmony@1 connect --deviceId 0123456789ABCDEF
 Use the dedicated launch step when you want a deterministic starting point before the rest of the task:
 
 ```bash
-npx @midscene/harmony@1 launch --uri com.huawei.hmos.settings
-npx @midscene/harmony@1 launch --uri com.huawei.hmos.camera
-npx @midscene/harmony@1 launch --uri https://www.example.com
+npx -y @midscene/harmony@1 launch --uri com.huawei.hmos.settings
+npx -y @midscene/harmony@1 launch --uri com.huawei.hmos.camera
+npx -y @midscene/harmony@1 launch --uri https://www.example.com
 ```
 
 ### Run a Raw HarmonyOS Shell Command
@@ -114,7 +114,7 @@ npx @midscene/harmony@1 launch --uri https://www.example.com
 Use this when the task needs lower-level device control that is not best expressed as a visible UI interaction:
 
 ```bash
-npx @midscene/harmony@1 runhdcshell --command "hidumper -s RenderService -a screen"
+npx -y @midscene/harmony@1 runhdcshell --command "hidumper -s RenderService -a screen"
 ```
 
 This is forwarded to `hdc shell` on the connected device. In practice, the underlying command is `hdc -t <deviceId> shell hidumper -s RenderService -a screen`.
@@ -122,7 +122,7 @@ This is forwarded to `hdc shell` on the connected device. In practice, the under
 ### Take Screenshot
 
 ```bash
-npx @midscene/harmony@1 take_screenshot
+npx -y @midscene/harmony@1 take_screenshot
 ```
 
 After taking a screenshot, read the saved image file to understand the current screen state before deciding the next action.
@@ -133,11 +133,11 @@ Use `act` to interact with the device and get the result. It autonomously handle
 
 ```bash
 # specific instructions
-npx @midscene/harmony@1 act --prompt "type hello world in the search field and press Enter"
-npx @midscene/harmony@1 act --prompt "long press the message bubble and tap Delete in the popup menu"
+npx -y @midscene/harmony@1 act --prompt "type hello world in the search field and press Enter"
+npx -y @midscene/harmony@1 act --prompt "long press the message bubble and tap Delete in the popup menu"
 
 # or target-driven instructions
-npx @midscene/harmony@1 act --prompt "open Settings and navigate to Wi-Fi settings, tell me the connected network name"
+npx -y @midscene/harmony@1 act --prompt "open Settings and navigate to Wi-Fi settings, tell me the connected network name"
 ```
 
 ### Use a Reference Image for Precise Targeting
@@ -145,7 +145,7 @@ npx @midscene/harmony@1 act --prompt "open Settings and navigate to Wi-Fi settin
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
 
 ```bash
-npx @midscene/harmony@1 tap --locate '{
+npx -y @midscene/harmony@1 tap --locate '{
   "prompt": "tap the area contains the image",
   "images": [
     {
@@ -162,7 +162,7 @@ The same `locate` JSON shape also works for other commands that accept a `locate
 ### Disconnect
 
 ```bash
-npx @midscene/harmony@1 disconnect
+npx -y @midscene/harmony@1 disconnect
 ```
 
 ### Consume Report Files
@@ -172,8 +172,8 @@ The generated HTML report is recommended for human reading first. It includes st
 If another skill or tool needs to consume the report, first convert it with `report-tool` from the same platform CLI package. Prefer Markdown for LLM-based workflows. Use JSON when the report needs to be processed programmatically.
 
 ```bash
-npx @midscene/harmony@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
-npx @midscene/harmony@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
+npx -y @midscene/harmony@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
+npx -y @midscene/harmony@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
 ```
 
 ## Workflow Pattern
@@ -199,18 +199,18 @@ Since CLI commands are stateless between invocations, follow this pattern:
 
 ```bash
 hdc shell aa start -a EntryAbility -b com.huawei.hmos.settings
-npx @midscene/harmony@1 connect
-npx @midscene/harmony@1 take_screenshot
-npx @midscene/harmony@1 act --prompt "scroll down the settings list and tap About device"
-npx @midscene/harmony@1 take_screenshot
-npx @midscene/harmony@1 disconnect
+npx -y @midscene/harmony@1 connect
+npx -y @midscene/harmony@1 take_screenshot
+npx -y @midscene/harmony@1 act --prompt "scroll down the settings list and tap About device"
+npx -y @midscene/harmony@1 take_screenshot
+npx -y @midscene/harmony@1 disconnect
 ```
 
 **Example — Form interaction:**
 
 ```bash
-npx @midscene/harmony@1 act --prompt "fill in the username field with 'testuser' and the password field with 'pass123', then tap the Login button"
-npx @midscene/harmony@1 take_screenshot
+npx -y @midscene/harmony@1 act --prompt "fill in the username field with 'testuser' and the password field with 'pass123', then tap the Login button"
+npx -y @midscene/harmony@1 take_screenshot
 ```
 
 ## Common HarmonyOS Bundle Names

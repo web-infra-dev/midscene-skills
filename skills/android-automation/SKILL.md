@@ -24,7 +24,7 @@ allowed-tools:
 > 3. **Allow enough time for each command to complete.** Midscene commands involve AI inference and screen interaction, which can take longer than typical shell commands. A typical command needs about 1 minute; complex `act` commands may need even longer.
 > 4. **Always report task results before finishing.** After completing the automation task, you MUST proactively summarize the results to the user — including key data found, actions completed, screenshots taken, and any relevant findings. Never silently end after the last automation step; the user expects a complete response in a single interaction.
 
-Automate Android devices using `npx @midscene/android@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
+Automate Android devices using `npx -y @midscene/android@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
 
 ## What `act` Can Do
 
@@ -82,8 +82,8 @@ If the model is not configured, ask the user to set it up. See [Model Configurat
 ### Connect to Device
 
 ```bash
-npx @midscene/android@1 connect
-npx @midscene/android@1 connect --deviceId emulator-5554
+npx -y @midscene/android@1 connect
+npx -y @midscene/android@1 connect --deviceId emulator-5554
 ```
 
 ### Launch an App or URL
@@ -91,9 +91,9 @@ npx @midscene/android@1 connect --deviceId emulator-5554
 Use the dedicated launch step when you want a deterministic starting point before the rest of the task:
 
 ```bash
-npx @midscene/android@1 launch --uri https://www.ebay.com
-npx @midscene/android@1 launch --uri com.android.settings
-npx @midscene/android@1 launch --uri com.android.settings/.Settings
+npx -y @midscene/android@1 launch --uri https://www.ebay.com
+npx -y @midscene/android@1 launch --uri com.android.settings
+npx -y @midscene/android@1 launch --uri com.android.settings/.Settings
 ```
 
 ### Run a Raw Android Shell Command
@@ -101,7 +101,7 @@ npx @midscene/android@1 launch --uri com.android.settings/.Settings
 Use this when the task needs lower-level device control that is not best expressed as a visible UI interaction:
 
 ```bash
-npx @midscene/android@1 runadbshell --command "dumpsys battery"
+npx -y @midscene/android@1 runadbshell --command "dumpsys battery"
 ```
 
 This is forwarded to `adb shell` on the connected device. In practice, the underlying command is `adb -s <deviceId> shell dumpsys battery` and some environments may also include the default ADB server port, such as `adb -P 5037 -s <deviceId> shell dumpsys battery`.
@@ -109,7 +109,7 @@ This is forwarded to `adb shell` on the connected device. In practice, the under
 ### Take Screenshot
 
 ```bash
-npx @midscene/android@1 take_screenshot
+npx -y @midscene/android@1 take_screenshot
 ```
 
 After taking a screenshot, read the saved image file to understand the current screen state before deciding the next action.
@@ -120,11 +120,11 @@ Use `act` to interact with the device and get the result. It autonomously handle
 
 ```bash
 # specific instructions
-npx @midscene/android@1 act --prompt "type hello world in the search field and press Enter"
-npx @midscene/android@1 act --prompt "long press the message bubble and tap Delete in the popup menu"
+npx -y @midscene/android@1 act --prompt "type hello world in the search field and press Enter"
+npx -y @midscene/android@1 act --prompt "long press the message bubble and tap Delete in the popup menu"
 
 # or target-driven instructions
-npx @midscene/android@1 act --prompt "open Settings and navigate to Wi-Fi settings, tell me the connected network name"
+npx -y @midscene/android@1 act --prompt "open Settings and navigate to Wi-Fi settings, tell me the connected network name"
 ```
 
 ### Use a Reference Image for Precise Targeting
@@ -132,7 +132,7 @@ npx @midscene/android@1 act --prompt "open Settings and navigate to Wi-Fi settin
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
 
 ```bash
-npx @midscene/android@1 tap --locate '{
+npx -y @midscene/android@1 tap --locate '{
   "prompt": "tap the area contains the image",
   "images": [
     {
@@ -149,7 +149,7 @@ The same `locate` JSON shape also works for other commands that accept a `locate
 ### Disconnect
 
 ```bash
-npx @midscene/android@1 disconnect
+npx -y @midscene/android@1 disconnect
 ```
 
 ### Consume Report Files
@@ -159,8 +159,8 @@ The generated HTML report is recommended for human reading first. It includes st
 If another skill or tool needs to consume the report, first convert it with `report-tool` from the same platform CLI package. Prefer Markdown for LLM-based workflows. Use JSON when the report needs to be processed programmatically.
 
 ```bash
-npx @midscene/android@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
-npx @midscene/android@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
+npx -y @midscene/android@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
+npx -y @midscene/android@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
 ```
 
 ## Workflow Pattern
@@ -186,15 +186,15 @@ Since CLI commands are stateless between invocations, follow this pattern:
 **Example — Popup menu interaction:**
 
 ```bash
-npx @midscene/android@1 act --prompt "long press the message bubble and tap Delete in the popup menu"
-npx @midscene/android@1 take_screenshot
+npx -y @midscene/android@1 act --prompt "long press the message bubble and tap Delete in the popup menu"
+npx -y @midscene/android@1 take_screenshot
 ```
 
 **Example — Form interaction:**
 
 ```bash
-npx @midscene/android@1 act --prompt "fill in the username field with 'testuser' and the password field with 'pass123', then tap the Login button"
-npx @midscene/android@1 take_screenshot
+npx -y @midscene/android@1 act --prompt "fill in the username field with 'testuser' and the password field with 'pass123', then tap the Login button"
+npx -y @midscene/android@1 take_screenshot
 ```
 
 ## Troubleshooting
