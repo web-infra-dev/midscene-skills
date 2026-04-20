@@ -23,7 +23,7 @@ allowed-tools:
 > 3. **Allow enough time for each command to complete.** Midscene commands involve AI inference and screen interaction, which can take longer than typical shell commands. A typical command needs about 1 minute; complex `act` commands may need even longer.
 > 4. **Always report task results before finishing.** After completing the automation task, you MUST proactively summarize the results to the user — including key data found, actions completed, screenshots taken, and any relevant findings. Never silently end after the last automation step; the user expects a complete response in a single interaction.
 
-Automate iOS devices using `npx @midscene/ios@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
+Automate iOS devices using `npx -y @midscene/ios@1`. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
 
 ## What `act` Can Do
 
@@ -81,7 +81,7 @@ If the model is not configured, ask the user to set it up. See [Model Configurat
 ### Connect to Device
 
 ```bash
-npx @midscene/ios@1 connect
+npx -y @midscene/ios@1 connect
 ```
 
 ### Launch an App, URL, or Deep Link
@@ -93,7 +93,7 @@ Use the built-in launch capability when you want to start from a known app or ro
 Use this when the task needs lower-level device control instead of a normal visible UI interaction:
 
 ```bash
-npx @midscene/ios@1 runwdarequest --method GET --endpoint /wda/screen
+npx -y @midscene/ios@1 runwdarequest --method GET --endpoint /wda/screen
 ```
 
 This does not run an ADB command. On iOS, the underlying operation is an HTTP request to WebDriverAgent, typically `GET http://<wdaHost>:<wdaPort>/session/<sessionId>/wda/screen`.
@@ -101,7 +101,7 @@ This does not run an ADB command. On iOS, the underlying operation is an HTTP re
 ### Take Screenshot
 
 ```bash
-npx @midscene/ios@1 take_screenshot
+npx -y @midscene/ios@1 take_screenshot
 ```
 
 After taking a screenshot, read the saved image file to understand the current screen state before deciding the next action.
@@ -112,11 +112,11 @@ Use `act` to interact with the device and get the result. It autonomously handle
 
 ```bash
 # specific instructions
-npx @midscene/ios@1 act --prompt "type hello world in the search field and press Enter"
-npx @midscene/ios@1 act --prompt "tap Delete, then confirm in the alert dialog"
+npx -y @midscene/ios@1 act --prompt "type hello world in the search field and press Enter"
+npx -y @midscene/ios@1 act --prompt "tap Delete, then confirm in the alert dialog"
 
 # or target-driven instructions
-npx @midscene/ios@1 act --prompt "open Settings and navigate to Wi-Fi, tell me the connected network name"
+npx -y @midscene/ios@1 act --prompt "open Settings and navigate to Wi-Fi, tell me the connected network name"
 ```
 
 ### Use a Reference Image for Precise Targeting
@@ -124,7 +124,7 @@ npx @midscene/ios@1 act --prompt "open Settings and navigate to Wi-Fi, tell me t
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
 
 ```bash
-npx @midscene/ios@1 tap --locate '{
+npx -y @midscene/ios@1 tap --locate '{
   "prompt": "tap the area contains the image",
   "images": [
     {
@@ -141,7 +141,7 @@ The same `locate` JSON shape also works for other commands that accept a `locate
 ### Disconnect
 
 ```bash
-npx @midscene/ios@1 disconnect
+npx -y @midscene/ios@1 disconnect
 ```
 
 ### Consume Report Files
@@ -151,8 +151,8 @@ The generated HTML report is recommended for human reading first. It includes st
 If another skill or tool needs to consume the report, first convert it with `report-tool` from the same platform CLI package. Prefer Markdown for LLM-based workflows. Use JSON when the report needs to be processed programmatically.
 
 ```bash
-npx @midscene/ios@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
-npx @midscene/ios@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
+npx -y @midscene/ios@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
+npx -y @midscene/ios@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
 ```
 
 ## Workflow Pattern
@@ -177,15 +177,15 @@ Since CLI commands are stateless between invocations, follow this pattern:
 **Example — Alert dialog interaction:**
 
 ```bash
-npx @midscene/ios@1 act --prompt "tap the Delete button and confirm in the alert dialog"
-npx @midscene/ios@1 take_screenshot
+npx -y @midscene/ios@1 act --prompt "tap the Delete button and confirm in the alert dialog"
+npx -y @midscene/ios@1 take_screenshot
 ```
 
 **Example — Form interaction:**
 
 ```bash
-npx @midscene/ios@1 act --prompt "fill in the username field with 'testuser' and the password field with 'pass123', then tap the Login button"
-npx @midscene/ios@1 take_screenshot
+npx -y @midscene/ios@1 act --prompt "fill in the username field with 'testuser' and the password field with 'pass123', then tap the Login button"
+npx -y @midscene/ios@1 take_screenshot
 ```
 
 ## Troubleshooting

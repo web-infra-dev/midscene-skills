@@ -31,7 +31,7 @@ allowed-tools:
 > 3. **Allow enough time for each command to complete.** Midscene commands involve AI inference and screen interaction, which can take longer than typical shell commands. A typical command needs about 1 minute; complex `act` commands may need even longer.
 > 4. **Always report task results before finishing.** After completing the automation task, you MUST proactively summarize the results to the user — including key data found, actions completed, screenshots taken, and any relevant findings. Never silently end after the last automation step; the user expects a complete response in a single interaction.
 
-Automate web browsing using `npx @midscene/web@1`. By default, launches a headless Chrome via Puppeteer that **persists across CLI calls** — no session loss between commands. Also supports **CDP mode** and **Bridge mode** to connect to an existing Chrome browser. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
+Automate web browsing using `npx -y @midscene/web@1`. By default, launches a headless Chrome via Puppeteer that **persists across CLI calls** — no session loss between commands. Also supports **CDP mode** and **Bridge mode** to connect to an existing Chrome browser. Each CLI command maps directly to an MCP tool — you (the AI agent) act as the brain, deciding which actions to take based on screenshots.
 
 ## What `act` Can Do
 
@@ -123,10 +123,10 @@ Use CDP mode to control the user's existing Chrome browser. The default CDP endp
 Add `--cdp <ws-endpoint>` to every command:
 
 ```bash
-npx @midscene/web@1 connect --cdp ws://127.0.0.1:9222/devtools/browser --url https://example.com
-npx @midscene/web@1 act --cdp ws://127.0.0.1:9222/devtools/browser --prompt "click the button"
-npx @midscene/web@1 take_screenshot --cdp ws://127.0.0.1:9222/devtools/browser
-npx @midscene/web@1 disconnect --cdp ws://127.0.0.1:9222/devtools/browser
+npx -y @midscene/web@1 connect --cdp ws://127.0.0.1:9222/devtools/browser --url https://example.com
+npx -y @midscene/web@1 act --cdp ws://127.0.0.1:9222/devtools/browser --prompt "click the button"
+npx -y @midscene/web@1 take_screenshot --cdp ws://127.0.0.1:9222/devtools/browser
+npx -y @midscene/web@1 disconnect --cdp ws://127.0.0.1:9222/devtools/browser
 ```
 
 ### Important notes for CDP mode
@@ -141,10 +141,10 @@ npx @midscene/web@1 disconnect --cdp ws://127.0.0.1:9222/devtools/browser
 Use Bridge mode when the user explicitly mentions "bridge", "extension", or has the Midscene Chrome Extension installed. Add `--bridge` to every command:
 
 ```bash
-npx @midscene/web@1 --bridge connect --url https://example.com
-npx @midscene/web@1 --bridge act --prompt "click the button"
-npx @midscene/web@1 --bridge take_screenshot
-npx @midscene/web@1 --bridge disconnect
+npx -y @midscene/web@1 --bridge connect --url https://example.com
+npx -y @midscene/web@1 --bridge act --prompt "click the button"
+npx -y @midscene/web@1 --bridge take_screenshot
+npx -y @midscene/web@1 --bridge disconnect
 ```
 
 ### Important notes for Bridge mode
@@ -161,13 +161,13 @@ npx @midscene/web@1 --bridge disconnect
 ### Connect to a Web Page
 
 ```bash
-npx @midscene/web@1 connect --url https://example.com
+npx -y @midscene/web@1 connect --url https://example.com
 ```
 
 ### Take Screenshot
 
 ```bash
-npx @midscene/web@1 take_screenshot
+npx -y @midscene/web@1 take_screenshot
 ```
 
 After taking a screenshot, read the saved image file to understand the current page state before deciding the next action.
@@ -178,11 +178,11 @@ Use `act` to interact with the page and get the result. It autonomously handles 
 
 ```bash
 # specific instructions
-npx @midscene/web@1 act --prompt "click the Login button and fill in the email field with 'user@example.com'"
-npx @midscene/web@1 act --prompt "scroll down and click the Submit button"
+npx -y @midscene/web@1 act --prompt "click the Login button and fill in the email field with 'user@example.com'"
+npx -y @midscene/web@1 act --prompt "scroll down and click the Submit button"
 
 # or target-driven instructions
-npx @midscene/web@1 act --prompt "click the country dropdown and select Japan"
+npx -y @midscene/web@1 act --prompt "click the country dropdown and select Japan"
 ```
 
 ### Use a Reference Image for Precise Targeting
@@ -190,7 +190,7 @@ npx @midscene/web@1 act --prompt "click the country dropdown and select Japan"
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
 
 ```bash
-npx @midscene/web@1 tap --locate '{
+npx -y @midscene/web@1 tap --locate '{
   "prompt": "tap the area contains the image",
   "images": [
     {
@@ -209,7 +209,7 @@ The same `locate` JSON shape also works for other commands that accept a `locate
 Disconnect from the page but keep the browser running:
 
 ```bash
-npx @midscene/web@1 disconnect
+npx -y @midscene/web@1 disconnect
 ```
 
 ### Close Browser
@@ -217,7 +217,7 @@ npx @midscene/web@1 disconnect
 Close the browser completely when finished (Puppeteer mode only):
 
 ```bash
-npx @midscene/web@1 close
+npx -y @midscene/web@1 close
 ```
 
 
@@ -228,8 +228,8 @@ The generated HTML report is recommended for human reading first. It includes st
 If another skill or tool needs to consume the report, first convert it with `report-tool` from the same platform CLI package. Prefer Markdown for LLM-based workflows. Use JSON when the report needs to be processed programmatically.
 
 ```bash
-npx @midscene/web@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
-npx @midscene/web@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
+npx -y @midscene/web@1 report-tool --action to-markdown --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-markdown
+npx -y @midscene/web@1 report-tool --action split --htmlPath ./midscene_run/report/.../index.html --outputDir ./output-data
 ```
 
 ## Workflow Pattern
@@ -257,15 +257,15 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 **Example — Dropdown selection:**
 
 ```bash
-npx @midscene/web@1 act --prompt "click the country dropdown and select Japan"
-npx @midscene/web@1 take_screenshot
+npx -y @midscene/web@1 act --prompt "click the country dropdown and select Japan"
+npx -y @midscene/web@1 take_screenshot
 ```
 
 **Example — Form interaction:**
 
 ```bash
-npx @midscene/web@1 act --prompt "fill in the email field with 'user@example.com' and the password field with 'pass123', then click the Log In button"
-npx @midscene/web@1 take_screenshot
+npx -y @midscene/web@1 act --prompt "fill in the email field with 'user@example.com' and the password field with 'pass123', then click the Log In button"
+npx -y @midscene/web@1 take_screenshot
 ```
 
 ## Troubleshooting
