@@ -185,6 +185,22 @@ npx -y @midscene/web@1 act --prompt "scroll down and click the Submit button"
 npx -y @midscene/web@1 act --prompt "click the country dropdown and select Japan"
 ```
 
+### Assert Current Page State
+
+Use `assert` to verify that the current page satisfies a natural language condition. It does not perform UI actions; it checks the visible page state and passes only when the assertion is true. Use this for validation, QA checks, and final state verification after `act`.
+
+```bash
+npx -y @midscene/web@1 assert --prompt "there is a login button visible"
+npx -y @midscene/web@1 assert --prompt "the checkout page shows the order total and a Pay button"
+```
+
+In CDP or Bridge mode, pass the same connection flags you use for other commands:
+
+```bash
+npx -y @midscene/web@1 assert --cdp ws://127.0.0.1:9222/devtools/browser --prompt "the dashboard is loaded"
+npx -y @midscene/web@1 --bridge assert --prompt "the profile page shows the user's avatar"
+```
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
@@ -238,7 +254,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 
 1. **Connect** to a URL to open a new tab
 2. **Take screenshot** to see the current state, make sure the page is loaded.
-3. **Execute action** using `act` to perform the desired action or target-driven instructions.
+3. **Execute action** using `act` to perform the desired action or target-driven instructions, and use `assert` when you need to verify the resulting page state.
 4. **Close** the browser when done (or **disconnect** to keep it for later)
 5. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
@@ -251,8 +267,9 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 5. **Close when done**: Use `close` to shut down the browser and free resources.
 6. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 7. **Batch related operations into a single `act` command**: When performing consecutive operations within the same page, combine them into one `act` prompt instead of splitting them into separate commands. For example, "fill in the email and password fields, then click the Login button" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
-8. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
-9. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
+8. **Use `assert` for verification**: When the goal is to confirm that a page state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the success toast is visible"` or `"the cart total is $42.00"`.
+9. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
+10. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — Dropdown selection:**
 

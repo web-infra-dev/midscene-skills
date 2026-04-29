@@ -115,6 +115,16 @@ npx -y @midscene/computer@1 act --prompt "drag the file icon to the Trash"
 npx -y @midscene/computer@1 act --prompt "search for the weather in Shanghai using the Chrome browser, tell me the result"
 ```
 
+### Assert Current Screen State
+
+Use `assert` to verify that the current screen satisfies a natural language condition. It does not perform UI actions; it checks the visible screen state and passes only when the assertion is true. Use this for validation, QA checks, and final state verification after `act`.
+
+```bash
+npx -y @midscene/computer@1 assert --prompt "there is a login button visible"
+npx -y @midscene/computer@1 assert --prompt "the active window shows a saved confirmation message"
+npx -y @midscene/computer@1 assert --displayId 1 --prompt "the file picker is open"
+```
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
@@ -158,7 +168,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 1. **Connect** to establish a session
 2. **Health check** — observe the output of the `connect` command. If `connect` already performed a health check (screenshot and mouse movement test), no additional check is needed. If `connect` did not perform a health check, do one manually: take a screenshot and verify it succeeds, then move the mouse to a random position (`act --prompt "move the mouse to a random position"`) and verify it succeeds. If either step fails, stop and troubleshoot before continuing. Only proceed to the next steps after both checks pass without errors.
 3. **Launch the target app and take screenshot** to see the current state, make sure the app is launched and visible on the screen.
-4. **Execute action** using `act` to perform the desired action or target-driven instructions.
+4. **Execute action** using `act` to perform the desired action or target-driven instructions, and use `assert` when you need to verify the resulting screen state.
 5. **Disconnect** when done
 6. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
@@ -176,8 +186,9 @@ Since CLI commands are stateless between invocations, follow this pattern:
    export PATH="/usr/sbin:/usr/bin:/bin:/sbin:$PATH"
    ```
    This prevents screenshot failures caused by missing system utilities.
-9. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
-10. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
+9. **Use `assert` for verification**: When the goal is to confirm that a screen state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the Save dialog is open"` or `"the export completed message is visible"`.
+10. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
+11. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — Context menu interaction:**
 
