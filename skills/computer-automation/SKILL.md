@@ -1,15 +1,16 @@
 ---
 name: desktop-computer-automation
 description: |
-  Vision-driven desktop automation using Midscene. Control your desktop (macOS, Windows, Linux) with natural language commands.
+  Vision-driven desktop automation using Midscene. Control your local desktop (macOS, Windows, Linux) or a remote Windows desktop over RDP with natural language commands.
   Operates entirely from screenshots — no DOM or accessibility labels required. Can interact with all visible elements on screen regardless of technology stack.
 
-  ⚠️ Takes over the user's real mouse and keyboard. For web apps, prefer "Browser Automation" instead.
-  Only use this for desktop-native apps (Electron, Qt, native macOS/Windows/Linux) that cannot run in a browser.
+  ⚠️ In local mode this takes over the user's real mouse and keyboard. For web apps, prefer "Browser Automation" instead.
+  Only use this for desktop-native apps (Electron, Qt, native macOS/Windows/Linux) that cannot run in a browser, or for driving a remote Windows host via RDP.
 
   Triggers: open app, press key, desktop, computer, click on screen, type text, screenshot desktop,
   launch application, switch window, desktop automation, control computer, mouse click, keyboard shortcut,
-  screen capture, find on screen, read screen, verify window, close app, test Electron app
+  screen capture, find on screen, read screen, verify window, close app, test Electron app,
+  rdp, remote desktop, windows server, connect via rdp
 
   Powered by Midscene.js (https://midscenejs.com)
 allowed-tools:
@@ -87,6 +88,40 @@ If the model is not configured, ask the user to set it up. See [Model Configurat
 npx -y @midscene/computer@1 connect
 npx -y @midscene/computer@1 connect --displayId <id>
 ```
+
+### Connect via RDP
+
+Use RDP mode to drive a **remote Windows desktop** instead of the local machine. Providing `--host` switches `connect` to RDP and routes every subsequent command (`act`, `tap`, `take_screenshot`, `assert`, `disconnect`) through the RDP helper binary bundled with `@midscene/computer`. The local mouse/keyboard is **not** touched.
+
+Minimum example:
+
+```bash
+npx -y @midscene/computer@1 connect \
+  --host rdp.example.com \
+  --username Administrator \
+  --password "$RDP_PASSWORD"
+```
+
+All RDP options for `connect` (RDP mode is activated when `--host` is set; the other flags are optional):
+
+- `--host <fqdn-or-ip>` — RDP host. Required to enter RDP mode.
+- `--port <number>` — RDP port (default `3389`).
+- `--username <user>` — RDP user account.
+- `--password <secret>` — RDP password. Prefer reading from an environment variable, secrets manager, or interactive prompt; never paste it into a shared transcript.
+- `--domain <domain>` — Active Directory / NTLM domain.
+- `--security-protocol <auto|tls|nla|rdp>` — Security protocol negotiation. Defaults to `auto`.
+- `--ignore-certificate` — Skip TLS certificate validation. Use only for trusted dev hosts with self-signed certs.
+- `--admin-session` — Attach to the admin/console session (equivalent to `mstsc /admin`).
+- `--desktop-width <px>` and `--desktop-height <px>` — Request a specific remote desktop resolution.
+
+Notes specific to RDP mode:
+
+- `--displayId` and `--headless` are **ignored** in RDP mode. A connected RDP session always exposes a single virtual display matching the negotiated `desktopWidth`/`desktopHeight`.
+- `computer_list_displays` enumerates **local** displays. Don't rely on it after an RDP connect; the RDP session reports its size through `connect`'s success output instead.
+- The RDP transport uses a native helper binary shipped inside `@midscene/computer`. If you see `RDP helper binary not found` errors, the optional `bin/<platform>/rdp-helper` was stripped from your install — reinstall the package or unpack a fresh tarball.
+- Treat RDP credentials as secrets: do not commit `.env` files containing `--password` to the repo; prefer `export RDP_PASSWORD=...` in the current shell and reference it as `--password "$RDP_PASSWORD"`.
+
+After `connect --host ...` succeeds, the rest of the workflow (`act`, `tap --locate`, `assert`, `take_screenshot`, `report-tool`, `disconnect`) is identical to local mode.
 
 ### List Displays
 
