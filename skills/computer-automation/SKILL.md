@@ -1,5 +1,5 @@
 ---
-name: desktop-computer-automation
+name: computer-automation
 description: |
   Vision-driven desktop automation using Midscene. Control your desktop (macOS, Windows, Linux) with natural language commands.
   Operates entirely from screenshots — no DOM or accessibility labels required. Can interact with all visible elements on screen regardless of technology stack.
