@@ -112,16 +112,26 @@ All RDP options for `connect` (RDP mode is activated when `--host` is set; the o
 - `--security-protocol <auto|tls|nla|rdp>` — Security protocol negotiation. Defaults to `auto`.
 - `--ignore-certificate` — Skip TLS certificate validation. Use only for trusted dev hosts with self-signed certs.
 - `--admin-session` — Attach to the admin/console session (equivalent to `mstsc /admin`).
-- `--desktop-width <px>` and `--desktop-height <px>` — Request a specific remote desktop resolution.
+- `--desktop-width <px>` and `--desktop-height <px>` — **Request** a specific remote desktop resolution. The actual size is whatever the RDP server negotiates back; e.g. requesting `1024x768` against a host that pins `1280x720` will land on `1280x720`. Confirm the negotiated size with `listdisplays --host ... --username ... --password ...` after connect.
 
 Notes specific to RDP mode:
 
-- `--displayId` and `--headless` are **ignored** in RDP mode. A connected RDP session always exposes a single virtual display matching the negotiated `desktopWidth`/`desktopHeight`.
-- `computer_list_displays` enumerates **local** displays. Don't rely on it after an RDP connect; the RDP session reports its size through `connect`'s success output instead.
+- `--displayId` and `--headless` are **ignored** in RDP mode. A connected RDP session always exposes a single virtual display whose size is whatever the server negotiated.
+- Two display-listing commands exist and behave differently — pick the right one:
+  - `list_displays` (with underscore, platform tool) — enumerates **local** physical displays only. Does not accept RDP flags. Useless after an RDP connect.
+  - `listdisplays` (no underscore, action tool) — accepts the same RDP flags as `connect`/`take_screenshot`/etc. In RDP mode it returns the negotiated virtual display, e.g. `[{ "id": "...", "name": "RDP 10.70.86.26:3389 (1280x720)", "primary": true }]`. Use this to verify the actual resolution.
 - The RDP transport uses a native helper binary shipped inside `@midscene/computer`. If you see `RDP helper binary not found` errors, the optional `bin/<platform>/rdp-helper` was stripped from your install — reinstall the package or unpack a fresh tarball.
 - Treat RDP credentials as secrets: do not commit `.env` files containing `--password` to the repo; prefer `export RDP_PASSWORD=...` in the current shell and reference it as `--password "$RDP_PASSWORD"`.
+- **Latency expectations**: every CLI invocation is a fresh node process, so each command re-establishes the RDP session. Budget roughly:
+  - `connect` / `take_screenshot` / `keyboardpress` / `scroll`: ~5 s (node startup + RDP TLS+NLA handshake + first frame).
+  - `act` / `assert` / `tap --locate`: ~5 s + AI inference + any planned sub-actions; expect 8–20 s end-to-end for typical interactions.
+  - The RDP handshake itself is ~700 ms; the rest is unavoidable cold-start cost in the CLI shape.
+- **Connect failure diagnostics**: when `connect` fails, the first line of stderr is the actionable error (e.g. `connect_failed: Failed to connect to RDP server: ERRCONNECT_LOGON_FAILURE: Logon failed.`). The subsequent stack trace is diagnostic noise — read the first line, then check credentials/network. Common `ERRCONNECT_*` causes:
+  - `LOGON_FAILURE` — bad username/password/domain.
+  - `CONNECT_TRANSPORT_FAILED` — host unreachable or RDP port blocked. Verify with `nc -zv <host> 3389`.
+  - `TLS_CONNECT_FAILED` — TLS handshake rejected. Try `--ignore-certificate` for self-signed dev hosts, or pin `--security-protocol nla`.
 
-After `connect --host ...` succeeds, the rest of the workflow (`act`, `tap --locate`, `assert`, `take_screenshot`, `report-tool`, `disconnect`) is identical to local mode.
+After `connect --host ...` succeeds, the rest of the workflow (`act`, `tap --locate`, `assert`, `take_screenshot`, `listdisplays`, `report-tool`, `disconnect`) is identical to local mode — just remember to pass the same `--host`/`--username`/`--password`/`--ignore-certificate` flags to every subsequent command, since each CLI invocation is stateless and reconnects.
 
 ### List Displays
 
