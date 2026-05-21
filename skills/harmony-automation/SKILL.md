@@ -150,6 +150,20 @@ npx -y @midscene/harmony@1 assert --prompt "the settings screen shows Wi-Fi and 
 npx -y @midscene/harmony@1 assert --deviceId 0123456789ABCDEF --prompt "the app shows a successful login message"
 ```
 
+When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--images` with a JSON array. Each `url` may be an http(s) link, a `data:` URI, or a local file path. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/harmony@1.9.0+`.
+
+```bash
+npx -y @midscene/harmony@1 assert \
+  --prompt "the visible app icon matches the supplied reference image" \
+  --images '[{"name":"icon","url":"https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"}]' \
+  --convertHttpImage2Base64 true
+
+# or with a local file
+npx -y @midscene/harmony@1 assert \
+  --prompt "the header on screen matches the local screenshot" \
+  --images '[{"name":"header","url":"./fixtures/header.png"}]'
+```
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.

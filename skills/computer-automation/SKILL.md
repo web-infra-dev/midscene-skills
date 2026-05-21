@@ -170,6 +170,20 @@ npx -y @midscene/computer@1 assert --prompt "the active window shows a saved con
 npx -y @midscene/computer@1 assert --displayId 1 --prompt "the file picker is open"
 ```
 
+When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--images` with a JSON array. Each `url` may be an http(s) link, a `data:` URI, or a local file path. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/computer@1.9.0+`.
+
+```bash
+npx -y @midscene/computer@1 assert \
+  --prompt "the active window matches the supplied reference screenshot" \
+  --images '[{"name":"reference","url":"https://example.com/reference.png"}]' \
+  --convertHttpImage2Base64 true
+
+# or with a local file
+npx -y @midscene/computer@1 assert \
+  --prompt "the visible icon matches the supplied logo" \
+  --images '[{"name":"logo","url":"./fixtures/logo.png"}]'
+```
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
