@@ -84,6 +84,16 @@ If the model is not configured, ask the user to set it up. See [Model Configurat
 npx -y @midscene/ios@1 connect
 ```
 
+If WebDriverAgent is already running and the session was created outside
+Midscene, pass the WDA endpoint and external session ID together:
+
+```bash
+npx -y @midscene/ios@1 connect --wda-host 127.0.0.1 --wda-port 8100 --session-id <sessionId>
+```
+
+Use the same `--wda-host`, `--wda-port`, and `--session-id` options on later
+commands when you want them to operate through that existing WDA session.
+
 ### Launch an App, URL, or Deep Link
 
 Use the built-in launch capability when you want to start from a known app or route before the rest of the task. Give it the most specific target you have, such as a bundle ID, web URL, deep link, or phone/mail link. Typical targets include `com.apple.Preferences`, `https://www.apple.com`, `myapp://profile/user/123`, and `tel:+1234567890`.
@@ -204,6 +214,7 @@ npx -y @midscene/ios@1 take_screenshot
 **Symptom:** Connection refused or timeout errors.
 **Solution:**
 - Ensure WebDriverAgent is installed and running on the device.
+- If another tool created the WDA session, pass that session explicitly with `--session-id` plus the matching `--wda-host` and `--wda-port`.
 - See [https://midscenejs.com/usage-ios.html](https://midscenejs.com/ios-getting-started.html) for setup instructions.
 
 ### Device Not Found
