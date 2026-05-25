@@ -138,18 +138,26 @@ npx -y @midscene/ios@1 assert --prompt "there is a login button visible"
 npx -y @midscene/ios@1 assert --prompt "the settings screen shows Wi-Fi and Bluetooth options"
 ```
 
-When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--images` with a JSON array. Each `url` may be an http(s) link, a `data:` URI, or a local file path. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/ios@1.9.0+`.
+When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/ios@1.9.0+`.
 
 ```bash
 npx -y @midscene/ios@1 assert \
   --prompt "the visible app icon matches the supplied reference image" \
-  --images '[{"name":"icon","url":"https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"}]' \
+  --image "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" \
+  --image-name "icon" \
   --convertHttpImage2Base64 true
 
 # or with a local file
 npx -y @midscene/ios@1 assert \
   --prompt "the header on screen matches the local screenshot" \
-  --images '[{"name":"header","url":"./fixtures/header.png"}]'
+  --image "./fixtures/header.png" \
+  --image-name "header"
+
+# multiple reference images — pair --image and --image-name by order
+npx -y @midscene/ios@1 assert \
+  --prompt "the screen shows both the app icon and the header" \
+  --image "./fixtures/icon.png"   --image-name "icon" \
+  --image "./fixtures/header.png" --image-name "header"
 ```
 
 ### Use a Reference Image for Precise Targeting

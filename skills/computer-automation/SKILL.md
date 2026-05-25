@@ -170,18 +170,26 @@ npx -y @midscene/computer@1 assert --prompt "the active window shows a saved con
 npx -y @midscene/computer@1 assert --displayId 1 --prompt "the file picker is open"
 ```
 
-When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--images` with a JSON array. Each `url` may be an http(s) link, a `data:` URI, or a local file path. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/computer@1.9.0+`.
+When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/computer@1.9.0+`.
 
 ```bash
 npx -y @midscene/computer@1 assert \
   --prompt "the active window matches the supplied reference screenshot" \
-  --images '[{"name":"reference","url":"https://example.com/reference.png"}]' \
+  --image "https://example.com/reference.png" \
+  --image-name "reference" \
   --convertHttpImage2Base64 true
 
 # or with a local file
 npx -y @midscene/computer@1 assert \
   --prompt "the visible icon matches the supplied logo" \
-  --images '[{"name":"logo","url":"./fixtures/logo.png"}]'
+  --image "./fixtures/logo.png" \
+  --image-name "logo"
+
+# multiple reference images — pair --image and --image-name by order
+npx -y @midscene/computer@1 assert \
+  --prompt "the active window matches both the icon and the logo" \
+  --image "./fixtures/icon.png" --image-name "icon" \
+  --image "./fixtures/logo.png" --image-name "logo"
 ```
 
 ### Use a Reference Image for Precise Targeting
