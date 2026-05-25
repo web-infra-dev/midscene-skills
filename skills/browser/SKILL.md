@@ -201,6 +201,28 @@ npx -y @midscene/web@1 assert --cdp ws://127.0.0.1:9222/devtools/browser --promp
 npx -y @midscene/web@1 --bridge assert --prompt "the profile page shows the user's avatar"
 ```
 
+When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/web@1.9.0+`.
+
+```bash
+npx -y @midscene/web@1 assert \
+  --prompt "the page shows the same logo as the reference image" \
+  --image "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" \
+  --image-name "logo" \
+  --convertHttpImage2Base64 true
+
+# or with a local file
+npx -y @midscene/web@1 assert \
+  --prompt "the visible header matches the supplied screenshot" \
+  --image "./fixtures/header.png" \
+  --image-name "header"
+
+# multiple reference images — pair --image and --image-name by order
+npx -y @midscene/web@1 assert \
+  --prompt "the page shows both the logo and the header" \
+  --image "./fixtures/logo.png"   --image-name "logo" \
+  --image "./fixtures/header.png" --image-name "header"
+```
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
