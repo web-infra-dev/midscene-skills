@@ -79,11 +79,19 @@ If the model is not configured, ask the user to set it up. See [Model Configurat
 
 ## Commands
 
+### Common Android CLI Flags
+
+Use these flags on commands that create or use the Android agent, such as `connect`, `take_screenshot`, `act`, `assert`, and `tap`:
+
+- `--device-id <id>`: Target a specific Android device from `adb devices`.
+- `--use-scrcpy`: Enable scrcpy accelerated screenshots. Use this when normal screenshot capture is slow or unstable. Because CLI invocations are stateless, pass this flag on each Android Midscene command where you want scrcpy-based screenshots.
+
 ### Connect to Device
 
 ```bash
 npx -y @midscene/android@1 connect
-npx -y @midscene/android@1 connect --deviceId emulator-5554
+npx -y @midscene/android@1 connect --device-id emulator-5554
+npx -y @midscene/android@1 connect --device-id emulator-5554 --use-scrcpy
 ```
 
 ### Launch an App or URL
@@ -110,6 +118,7 @@ This is forwarded to `adb shell` on the connected device. In practice, the under
 
 ```bash
 npx -y @midscene/android@1 take_screenshot
+npx -y @midscene/android@1 take_screenshot --device-id emulator-5554 --use-scrcpy
 ```
 
 After taking a screenshot, read the saved image file to understand the current screen state before deciding the next action.
@@ -122,6 +131,7 @@ Use `act` to interact with the device and get the result. It autonomously handle
 # specific instructions
 npx -y @midscene/android@1 act --prompt "type hello world in the search field and press Enter"
 npx -y @midscene/android@1 act --prompt "long press the message bubble and tap Delete in the popup menu"
+npx -y @midscene/android@1 act --device-id emulator-5554 --use-scrcpy --prompt "type hello world in the search field and press Enter"
 
 # or target-driven instructions
 npx -y @midscene/android@1 act --prompt "open Settings and navigate to Wi-Fi settings, tell me the connected network name"
@@ -134,7 +144,8 @@ Use `assert` to verify that the current screen satisfies a natural language cond
 ```bash
 npx -y @midscene/android@1 assert --prompt "there is a login button visible"
 npx -y @midscene/android@1 assert --prompt "the settings screen shows Wi-Fi and Bluetooth options"
-npx -y @midscene/android@1 assert --deviceId emulator-5554 --prompt "the app shows a successful login message"
+npx -y @midscene/android@1 assert --device-id emulator-5554 --prompt "the app shows a successful login message"
+npx -y @midscene/android@1 assert --device-id emulator-5554 --use-scrcpy --prompt "the app shows a successful login message"
 ```
 
 When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/android@1.9.0+`.
@@ -212,9 +223,10 @@ Since CLI commands are stateless between invocations, follow this pattern:
 3. **Describe locations when possible**: Help target elements by describing their position (e.g., `"the search icon at the top right"`, `"the third item in the list"`).
 4. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 5. **Batch related operations into a single `act` command**: When performing consecutive operations within the same app, combine them into one `act` prompt instead of splitting them into separate commands. For example, "open Settings, tap Wi-Fi, and toggle it on" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
-6. **Use `assert` for verification**: When the goal is to confirm that a screen state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the permission dialog is visible"` or `"the Save button is disabled"`.
-7. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
-8. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
+6. **Use scrcpy when screenshot capture needs acceleration**: Add `--use-scrcpy` to each relevant command when normal Android screenshots are slow, flaky, or blocked by the environment.
+7. **Use `assert` for verification**: When the goal is to confirm that a screen state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the permission dialog is visible"` or `"the Save button is disabled"`.
+8. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
+9. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — Popup menu interaction:**
 
@@ -241,4 +253,5 @@ npx -y @midscene/android@1 take_screenshot
 | **Command timeout** | The device screen may be off or locked. Wake the device with `adb shell input keyevent KEYCODE_WAKEUP` and unlock it. |
 | **API key error** | Check `.env` file contains `MIDSCENE_MODEL_API_KEY=<your-key>`. See [Model Configuration](https://midscenejs.com/zh/model-common-config.html). |
 | **`@midscene/*` dependency version is outdated** | Check local versions with `npm ls @midscene/android @midscene/core @midscene/shared` (or `pnpm why @midscene/android`). Compare with latest versions using `npm view @midscene/android version`, `npm view @midscene/core version`, and `npm view @midscene/shared version`. Upgrade as needed (`npm i @midscene/android@latest @midscene/core@latest @midscene/shared@latest`). |
-| **Wrong device targeted** | If multiple devices are connected, use `--deviceId <id>` flag with the `connect` command. |
+| **Wrong device targeted** | If multiple devices are connected, use the `--device-id <id>` flag. |
+| **Screenshots are slow or flaky** | Add `--use-scrcpy` to the Android Midscene command to enable scrcpy accelerated screenshots. |
