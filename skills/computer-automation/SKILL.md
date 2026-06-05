@@ -272,6 +272,26 @@ npx -y @midscene/computer@1 take_screenshot
 ```
 
 
+## Improve Precision (Deep Locate / Deep Think)
+
+Two optional global flags help when Midscene struggles with a task. Put them anywhere in the command (before or after the sub-command); once set, the relevant operations use them by default, so you don't pass a per-call parameter.
+
+- `--deep-locate` — spends an extra round of visual reasoning to pinpoint the target element. Use it when an action interacts with the wrong spot (location drift / offset). It applies to every operation that locates an element, including `tap --locate` and the locating that happens inside `act`. **Requires a visual-language (VL) model.**
+- `--deep-think` — plans `act` with deeper reasoning (richer context and sub-goal decomposition). Use it for complex, multi-step `act` instructions; it only affects planning.
+
+Both trade a little speed for better results, and you can combine them.
+
+```bash
+# more accurate element location (helps act's internal locating too)
+npx -y @midscene/computer@1 act --deep-locate --prompt "click the tiny red close button in the top-left of the window"
+
+# deeper planning for a complex, multi-step act
+npx -y @midscene/computer@1 act --deep-think --prompt "open the Export dialog, choose PDF, and save it to the Desktop"
+
+# combine both
+npx -y @midscene/computer@1 act --deep-locate --deep-think --prompt "open Preferences and switch to the Advanced tab"
+```
+
 ## Troubleshooting
 
 ### macOS: Accessibility Permission Denied
