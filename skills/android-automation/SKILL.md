@@ -148,7 +148,7 @@ npx -y @midscene/android@1 assert --device-id emulator-5554 --prompt "the app sh
 npx -y @midscene/android@1 assert --device-id emulator-5554 --use-scrcpy --prompt "the app shows a successful login message"
 ```
 
-By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs. Requires `@midscene/android@1.9.2+`.
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs.
 
 ```bash
 npx -y @midscene/android@1 assert \

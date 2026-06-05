@@ -138,7 +138,7 @@ npx -y @midscene/ios@1 assert --prompt "there is a login button visible"
 npx -y @midscene/ios@1 assert --prompt "the settings screen shows Wi-Fi and Bluetooth options"
 ```
 
-By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs. Requires `@midscene/ios@1.9.2+`.
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs.
 
 ```bash
 npx -y @midscene/ios@1 assert \

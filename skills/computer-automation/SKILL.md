@@ -170,7 +170,7 @@ npx -y @midscene/computer@1 assert --prompt "the active window shows a saved con
 npx -y @midscene/computer@1 assert --displayId 1 --prompt "the file picker is open"
 ```
 
-By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs. Requires `@midscene/computer@1.9.2+`.
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs.
 
 ```bash
 npx -y @midscene/computer@1 assert \

@@ -150,7 +150,7 @@ npx -y @midscene/harmony@1 assert --prompt "the settings screen shows Wi-Fi and 
 npx -y @midscene/harmony@1 assert --deviceId 0123456789ABCDEF --prompt "the app shows a successful login message"
 ```
 
-By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs. Requires `@midscene/harmony@1.9.2+`.
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs.
 
 ```bash
 npx -y @midscene/harmony@1 assert \
