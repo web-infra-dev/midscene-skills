@@ -51,23 +51,20 @@ This skill has three modes. Choose based on the user's intent:
 
 **CDP vs Bridge**: Both control the user's real Chrome with login sessions preserved. CDP only needs a Chrome setting toggle; Bridge needs a Chrome Extension installed. If the user doesn't specify, prefer **CDP mode** as it has fewer prerequisites.
 
-### Precheck: detect available connection modes
+### Precheck: detect available CDP target
 
-Before using CDP or Bridge mode, run a quick precheck to verify the target is reachable. This avoids long timeouts when the user hasn't enabled remote debugging or installed the extension.
+Before using CDP mode, run a quick precheck to verify Chrome's remote debugging port is reachable. This avoids long timeouts when the user hasn't enabled remote debugging.
 
 ```bash
-# CDP precheck (port 9222, 2s timeout) — returns "101" if available
+# CDP precheck (port 9222, 2s timeout) — returns "101" if Chrome is listening for DevTools
 curl -s --max-time 2 -o /dev/null -w "%{http_code}" -H "Upgrade: websocket" -H "Connection: Upgrade" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" http://127.0.0.1:9222/devtools/browser
-
-# Bridge precheck (port 3766, 2s timeout) — returns "200" or "400" if extension is listening
-curl -s --max-time 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:3766/socket.io/?EIO=4&transport=polling
 ```
 
-**How to use precheck results:**
-- CDP returns `101` → CDP mode is available, use `--cdp`
-- Bridge returns `200` or `400` → Bridge extension is listening, use `--bridge`
-- Both fail → Chrome may not be running. Try opening Chrome using a shell command appropriate for the current platform, wait 2-3 seconds, then re-run the precheck. If it still fails, fall back to Puppeteer mode or ask the user to check their Chrome settings.
-- Both available and user didn't specify → prefer CDP
+**How to use the precheck result:**
+- Returns `101` → CDP mode is available, use `--cdp`
+- Fails (curl exit 7 or HTTP `000`) → Chrome is not running with remote debugging enabled. Start Chrome with `--remote-debugging-port=9222`, wait 2-3 seconds, then re-run the precheck. If it still fails, fall back to Puppeteer mode (or use Bridge mode if the Midscene Chrome Extension is installed).
+
+> **Bridge mode has no usable precheck.** Despite port 3766 being involved, the bridge server is started **by the CLI** (`npx ... --bridge connect` opens 3766 itself); the extension is the **client** that hooks in. Checking 3766 before the CLI runs always returns nothing. Just run `--bridge connect` directly — its first log line (`waiting for bridge to connect...` → `one client connected`) tells you whether the extension picked it up.
 
 ## Prerequisites
 
@@ -149,9 +146,11 @@ npx -y @midscene/web@1 --bridge disconnect
 
 ### Important notes for Bridge mode
 
-- The user must have Chrome open with the Midscene Extension installed and enabled.
+- The user must have Chrome (or any Chromium-based browser that supports Chrome extensions, e.g. Edge, Arc, Dia) open with the Midscene Extension installed and enabled.
 - Install the extension from Chrome Web Store: https://chromewebstore.google.com/detail/midscenejs/gbldofcpkknbggpkmbdaefngejllnief
-- Check that the "bridge mode" indicator in the extension shows "Listening" status.
+- **Handshake direction**: the **CLI is the server** (listens on `127.0.0.1:3766`); the **extension is the client** that connects to it. The "Listening" status shown in the extension panel means "ready to connect to a CLI", not that the extension itself opened a port. Practically: launch `--bridge connect` first; the extension will hook in within a second or two.
+- **Active tab must be a normal web page.** The extension cannot operate `chrome://`, `chrome-extension://`, the Chrome Web Store, or other privileged URLs. If the active tab is one of those, the CLI will return `Cannot access a chrome:// URL`. Ask the user to switch to a regular `http(s)://` tab before reconnecting.
+- `connect` without `--url` attaches to the current active tab; `connect --url <href>` navigates that tab. The CLI does not open new tabs in bridge mode.
 - `disconnect` only closes the CLI-side bridge connection, not the browser or tabs.
 - If the extension is not installed, guide the user to install it or suggest switching to CDP mode instead.
 - See the [Bridge Mode documentation](https://midscenejs.com/bridge-mode-by-chrome-extension.html).
