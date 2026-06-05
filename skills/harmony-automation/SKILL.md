@@ -150,6 +150,14 @@ npx -y @midscene/harmony@1 assert --prompt "the settings screen shows Wi-Fi and 
 npx -y @midscene/harmony@1 assert --deviceId 0123456789ABCDEF --prompt "the app shows a successful login message"
 ```
 
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs. Requires `@midscene/harmony@1.9.2+`.
+
+```bash
+npx -y @midscene/harmony@1 assert \
+  --prompt "the order confirmation screen is visible" \
+  --message "the order should be confirmed after tapping Pay"
+```
+
 When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/harmony@1.9.0+`.
 
 ```bash

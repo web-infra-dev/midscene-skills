@@ -200,6 +200,14 @@ npx -y @midscene/web@1 assert --cdp ws://127.0.0.1:9222/devtools/browser --promp
 npx -y @midscene/web@1 --bridge assert --prompt "the profile page shows the user's avatar"
 ```
 
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs. Requires `@midscene/web@1.9.2+`.
+
+```bash
+npx -y @midscene/web@1 assert \
+  --prompt "the checkout page shows an order confirmation" \
+  --message "the order should be confirmed after clicking Pay"
+```
+
 When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/web@1.9.0+`.
 
 ```bash

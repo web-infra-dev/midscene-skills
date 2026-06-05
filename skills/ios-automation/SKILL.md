@@ -138,6 +138,14 @@ npx -y @midscene/ios@1 assert --prompt "there is a login button visible"
 npx -y @midscene/ios@1 assert --prompt "the settings screen shows Wi-Fi and Bluetooth options"
 ```
 
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs. Requires `@midscene/ios@1.9.2+`.
+
+```bash
+npx -y @midscene/ios@1 assert \
+  --prompt "the order confirmation screen is visible" \
+  --message "the order should be confirmed after tapping Pay"
+```
+
 When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/ios@1.9.0+`.
 
 ```bash
