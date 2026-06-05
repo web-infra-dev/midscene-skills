@@ -73,10 +73,20 @@ Assertions, data extraction, and waiting should also be done via `aiAct` — it 
 // UI operations
 await ctx.agent.aiAct('type "iPhone" in the search box, then click the search button');
 await ctx.agent.aiAct('hover over the user avatar in the top right');
+await ctx.agent.aiAct('complete the checkout form and submit it', { deepThink: true });
 
 // State confirmations / assertions — also use aiAct
 await ctx.agent.aiAct('verify the page shows "Login successful"');
 await ctx.agent.aiAct('verify the error message is visible');
+```
+
+Use `{ deepThink: true }` for complex multi-step tasks, dense pages, or cases where planning and target locating need stronger reasoning. Keep it off for simple single-step actions because it may increase planning time.
+
+When generating Midscene YAML, pass `deepThink` as a sibling option of `ai`, `aiAct`, or `aiAction`:
+
+```yaml
+- aiAct: complete the checkout form and submit it
+  deepThink: true
 ```
 
 **Phase splitting:** If the task prompt is too long or covers multiple distinct stages, split it into separate `aiAct` calls — one per phase. Each phase should be a self-contained logical step, and all phases combined must match the user's original intent.
