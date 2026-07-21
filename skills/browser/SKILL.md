@@ -9,7 +9,7 @@ description: |
   Use this skill when the user wants to:
   - Browse, navigate, or open web pages
   - Scrape, extract, or collect data from websites
-  - Fill out forms, click buttons, or interact with web elements
+  - Fill out forms, upload local files, click buttons, or interact with web elements
   - Verify, validate, test, or QA frontend UI behavior
   - Take screenshots of web pages
   - Automate multi-step web workflows
@@ -183,6 +183,20 @@ npx -y @midscene/web@1 act --prompt "scroll down and click the Submit button"
 # or target-driven instructions
 npx -y @midscene/web@1 act --prompt "click the country dropdown and select Japan"
 ```
+
+### Upload local files
+
+Include the exact local file path in the `act` prompt. Use an absolute path. Relative paths resolve from the directory where you run the command.
+
+```bash
+avatar_path=/absolute/path/to/avatar.png
+npx -y @midscene/web@1 act \
+  --prompt "click the Upload avatar button and upload $avatar_path"
+```
+
+For multiple uploads, pair each path with the action that opens its file chooser. Midscene replaces the previous file chooser configuration before the next upload.
+
+This works in Puppeteer, CDP, and Bridge modes.
 
 ### Assert Current Page State
 

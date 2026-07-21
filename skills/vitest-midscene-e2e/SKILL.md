@@ -79,6 +79,22 @@ await ctx.agent.aiAct('verify the page shows "Login successful"');
 await ctx.agent.aiAct('verify the error message is visible');
 ```
 
+#### Upload local files in Web tests
+
+Prompt-based file uploads work only with the Web agent. Resolve each file path before adding it to the prompt.
+
+```typescript
+import { resolve } from 'node:path';
+
+const avatarPath = resolve('e2e/fixtures/avatar.png');
+
+await ctx.agent.aiAct(
+  `click the "Upload avatar" button and upload ${avatarPath}`,
+);
+```
+
+For multiple uploads in one `aiAct`, pair each path with the action that opens its file chooser. Do not combine prompt paths with `fileChooserAccept`. A later planned upload can replace the configured files.
+
 **Phase splitting:** If the task prompt is too long or covers multiple distinct stages, split it into separate `aiAct` calls — one per phase. Each phase should be a self-contained logical step, and all phases combined must match the user's original intent.
 
 ```typescript
