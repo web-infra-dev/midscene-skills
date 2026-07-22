@@ -172,6 +172,23 @@ npx -y @midscene/harmony@1 assert \
   --image "./fixtures/header.png" --image-name "header"
 ```
 
+### Observe Transient UI During an Action
+
+Use `observe` when the state you need to verify may appear and disappear while an action is running, such as a toast, loading banner, animation, or screen transition. It starts observation, runs the action, stops observation, and checks the assertion in one CLI invocation:
+
+```bash
+npx -y @midscene/harmony@1 observe \
+  --action "tap the Submit button" \
+  --prompt "a success toast appeared during submission"
+
+# Keep the same device selector when targeting a specific device
+npx -y @midscene/harmony@1 observe --device-id 0123456789ABCDEF \
+  --action "tap the Submit button" \
+  --prompt "a success toast appeared during submission"
+```
+
+Do not split observation into separate start/stop commands: the observer only exists inside this one invocation. Optional tuning flags are `--interval-ms`, `--max-frames`, and `--watchdog-ms`. HarmonyOS observation uses periodic screenshots. Observed assertions send multiple frames to the model, so use ordinary `assert` when only the current or final screen matters.
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
@@ -214,7 +231,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 
 1. **Connect** to establish a session
 2. **Launch the target app and take screenshot** to see the current state, make sure the app is launched and visible on the screen.
-3. **Execute action** using `act` to perform the desired action or target-driven instructions, and use `assert` when you need to verify the resulting screen state.
+3. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting screen state, or `observe` when a transient state must be verified during the action.
 4. **Disconnect** when done
 
 ## Best Practices
@@ -224,7 +241,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 3. **Describe locations when possible**: Help target elements by describing their position (e.g., `"the search icon at the top right"`, `"the third item in the list"`).
 4. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 5. **Batch related operations into a single `act` command**: When performing consecutive operations within the same app, combine them into one `act` prompt instead of splitting them into separate commands. For example, "open Settings, tap Wi-Fi, and toggle it on" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
-6. **Use `assert` for verification**: When the goal is to confirm that a screen state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the permission dialog is visible"` or `"the Save button is disabled"`.
+6. **Choose the right verification window**: Use `assert --prompt "..."` for the current or final screen. Use `observe --action "..." --prompt "..."` when a toast, banner, animation, or transition may disappear before a separate assertion runs.
 7. **Summarize report files after completion**: After finishing the automation task, collect and summarize all report files (screenshots, logs, output files, etc.) for the user. Present a clear summary of what was accomplished, what files were generated, and where they are located, making it easy for the user to review the results.
 8. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 

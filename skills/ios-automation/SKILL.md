@@ -160,6 +160,23 @@ npx -y @midscene/ios@1 assert \
   --image "./fixtures/header.png" --image-name "header"
 ```
 
+### Observe Transient UI During an Action
+
+Use `observe` when the state you need to verify may appear and disappear while an action is running, such as a toast, loading banner, animation, or screen transition. It starts observation, runs the action, stops observation, and checks the assertion in one CLI invocation:
+
+```bash
+npx -y @midscene/ios@1 observe \
+  --action "tap the Submit button" \
+  --prompt "a success toast appeared during submission"
+
+# Keep the same target options when selecting a device or WDA session
+npx -y @midscene/ios@1 observe --device-id <udid> \
+  --action "tap the Submit button" \
+  --prompt "a success toast appeared during submission"
+```
+
+Do not split observation into separate start/stop commands: the observer only exists inside this one invocation. Optional tuning flags are `--interval-ms`, `--max-frames`, and `--watchdog-ms`. Observation uses the WDA MJPEG frame source when it is enabled and otherwise falls back to periodic screenshots. Observed assertions send multiple frames to the model, so use ordinary `assert` when only the current or final screen matters.
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
@@ -202,7 +219,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 
 1. **Connect** to establish a session
 2. **Launch the target app and take screenshot** to see the current state, make sure the app is launched and visible on the screen.
-3. **Execute action** using `act` to perform the desired action or target-driven instructions, and use `assert` when you need to verify the resulting screen state.
+3. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting screen state, or `observe` when a transient state must be verified during the action.
 4. **Disconnect** when done
 5. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
@@ -212,7 +229,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 2. **Describe locations when possible**: Help target elements by describing their position (e.g., `"the search icon at the top right"`, `"the third item in the list"`).
 3. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 4. **Batch related operations into a single `act` command**: When performing consecutive operations within the same app, combine them into one `act` prompt instead of splitting them into separate commands. For example, "open Settings, tap Wi-Fi, and check the connected network" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
-5. **Use `assert` for verification**: When the goal is to confirm that a screen state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the permission dialog is visible"` or `"the Save button is disabled"`.
+5. **Choose the right verification window**: Use `assert --prompt "..."` for the current or final screen. Use `observe --action "..." --prompt "..."` when a toast, banner, animation, or transition may disappear before a separate assertion runs.
 6. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
 7. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 

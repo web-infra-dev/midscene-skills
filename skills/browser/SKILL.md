@@ -223,6 +223,29 @@ npx -y @midscene/web@1 assert \
   --image "./fixtures/header.png" --image-name "header"
 ```
 
+### Observe Transient UI During an Action
+
+Use `observe` when the state you need to verify may appear and disappear while an action is running, such as a toast, loading banner, animation, or screen transition. It starts observation, runs the action, stops observation, and checks the assertion in one CLI invocation:
+
+```bash
+npx -y @midscene/web@1 observe \
+  --action "click the Submit button" \
+  --prompt "a success toast appeared during submission"
+```
+
+In CDP or Bridge mode, pass the same connection flags:
+
+```bash
+npx -y @midscene/web@1 observe --cdp ws://127.0.0.1:9222/devtools/browser \
+  --action "click Save" \
+  --prompt "a saved confirmation appeared"
+npx -y @midscene/web@1 --bridge observe \
+  --action "click Save" \
+  --prompt "a saved confirmation appeared"
+```
+
+Do not split observation into separate start/stop commands: the observer only exists inside this one invocation. Optional tuning flags are `--interval-ms`, `--max-frames`, and `--watchdog-ms`. Observed assertions send multiple frames to the model, so use ordinary `assert` when only the current or final page state matters.
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
@@ -276,7 +299,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 
 1. **Connect** to a URL to open a new tab
 2. **Take screenshot** to see the current state, make sure the page is loaded.
-3. **Execute action** using `act` to perform the desired action or target-driven instructions, and use `assert` when you need to verify the resulting page state.
+3. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting page state, or `observe` when a transient state must be verified during the action.
 4. **Close** the browser when done (or **disconnect** to keep it for later)
 5. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
@@ -286,7 +309,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 2. **Inspect visible state**: After navigation or actions that trigger page changes, take a screenshot and read it before deciding the next step.
 3. **Use natural, specific prompts**: Describe visible UI and desired outcomes, such as `"click the blue Submit button in the contact form"`, not selectors like `"#submit"`.
 4. **Batch related operations into a single `act` command**: For example, fill the email and password fields, then click Log In in one prompt. Use separate commands when you need to inspect the intermediate state.
-5. **Use `assert` for verification**: Check observable page state with `assert --prompt "..."`, such as `"the success toast is visible"` or `"the cart total is $42.00"`.
+5. **Choose the right verification window**: Use `assert --prompt "..."` for the current or final page state. Use `observe --action "..." --prompt "..."` when a toast, banner, animation, or transition may disappear before a separate assertion runs.
 6. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — Dropdown selection:**
