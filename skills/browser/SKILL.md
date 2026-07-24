@@ -126,6 +126,26 @@ npx -y @midscene/web@1 take_screenshot --cdp ws://127.0.0.1:9222/devtools/browse
 npx -y @midscene/web@1 disconnect --cdp ws://127.0.0.1:9222/devtools/browser
 ```
 
+### Custom HTTP Headers in CDP Mode
+
+When the user needs custom request headers in CDP mode, such as routing requests to a PPE environment, pass each header through a separate `--extra-http-header 'Name:Value'` option. Repeat the option to send multiple headers. Use the exact header names and values supplied by the user; do not guess environment names or authentication values.
+
+```bash
+npx -y @midscene/web@1 connect \
+  --cdp ws://127.0.0.1:9222/devtools/browser \
+  --extra-http-header 'x-use-ppe:1' \
+  --extra-http-header 'x-tt-env:ppe_example' \
+  --url https://example.com
+
+npx -y @midscene/web@1 act \
+  --cdp ws://127.0.0.1:9222/devtools/browser \
+  --extra-http-header 'x-use-ppe:1' \
+  --extra-http-header 'x-tt-env:ppe_example' \
+  --prompt "click the button"
+```
+
+Each CLI command creates a new CDP session. Repeat every required `--extra-http-header 'Name:Value'` option on each CDP command that may issue requests, including `connect`, `act`, and `assert`. Split each entry at the first colon, so values may contain additional colons. The headers are applied before `connect --url` navigates, so the initial document request includes them. Do not print header values in task summaries, and avoid putting sensitive authentication values directly in shell history.
+
 ### Important notes for CDP mode
 
 - The browser is managed externally — `disconnect` releases the connection but does NOT close the browser. There is no `close` command in CDP mode.
