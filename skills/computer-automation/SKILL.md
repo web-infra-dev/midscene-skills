@@ -205,17 +205,21 @@ npx -y @midscene/computer@1 assert \
 Use a recording when the state to verify may disappear before a current-screen assertion runs, such as a toast, loading banner, animation, or transition:
 
 ```bash
-npx -y @midscene/computer@1 record start --session save --displayId 1
+# Terminal 1: keep this foreground command running
+npx -y @midscene/computer@1 record start --displayId 1 \
+  --output ./save-observation.json
+
+# Terminal 2, while Terminal 1 records
 npx -y @midscene/computer@1 act --displayId 1 \
   --prompt "click the Save button"
-npx -y @midscene/computer@1 record end --session save \
-  --output ./save-observation.json
+
+# Send Ctrl+C to Terminal 1 and wait for the saved-path message, then assert
 npx -y @midscene/computer@1 assert --displayId 1 \
   --record ./save-observation.json \
   --prompt "a saved confirmation appeared"
 ```
 
-Pass local display or RDP target flags to `record start`; its managed worker keeps that connection until `record end`. Repeat the target flags on actions and the final `assert`. Invoke every command synchronously and never add shell `&`. Only one recording can be active for the same platform and working directory. Optional capture flags are `--interval-ms`, `--max-frames`, and `--watchdog-ms`; the default watchdog finalizes the recording after five minutes, while `--watchdog-ms 0` disables that safety limit. The output is a versioned JSON sequence of ordered screenshots, not an encoded video. Use ordinary `assert` without `--record` when only the current screen matters.
+Pass local display or RDP target flags and `--output` to `record start`, then wait for `Recording. Press Ctrl+C to stop and save.` Keep the recorder as a foreground process in its dedicated terminal; never add shell `&`. Perform the interaction manually or from a second terminal, send Ctrl+C to the recorder, and wait until it prints the saved path before asserting. Repeat target flags on actions and the final `assert`. Optional capture flags are `--interval-ms`, `--max-frames`, and `--watchdog-ms`; the default watchdog finalizes and saves the recording after five minutes, while `--watchdog-ms 0` disables that safety limit. The output is a versioned JSON sequence of ordered screenshots, not an encoded video. Each frame is embedded as a base64 image data URL. Use ordinary `assert` without `--record` when only the current screen matters.
 
 ### Use a Reference Image for Precise Targeting
 
@@ -260,7 +264,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 1. **Connect** to establish a session
 2. **Health check** — observe the output of the `connect` command. If `connect` already performed a health check (screenshot and mouse movement test), no additional check is needed. If `connect` did not perform a health check, do one manually: take a screenshot and verify it succeeds, then move the mouse to a random position (`act --prompt "move the mouse to a random position"`) and verify it succeeds. If either step fails, stop and troubleshoot before continuing. Only proceed to the next steps after both checks pass without errors.
 3. **Launch the target app and take screenshot** to see the current state, make sure the app is launched and visible on the screen.
-4. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting screen state, or wrap transient-state workflows with `record start` / `record end` and then use `assert --record`.
+4. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting screen state, or keep `record start --output ...` running in a dedicated terminal during transient-state workflows, stop it with Ctrl+C, and then use `assert --record`.
 5. **Disconnect** when done
 6. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
@@ -278,7 +282,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
    export PATH="/usr/sbin:/usr/bin:/bin:/sbin:$PATH"
    ```
    This prevents screenshot failures caused by missing system utilities.
-9. **Choose the right verification window**: Use `assert --prompt "..."` for the current screen. For a toast, banner, animation, or transition, run `record start`, perform the interaction, run `record end`, then pass the saved artifact to `assert --record`.
+9. **Choose the right verification window**: Use `assert --prompt "..."` for the current screen. For a toast, banner, animation, or transition, run `record start --output ...` in a dedicated terminal, perform the interaction, stop recording with Ctrl+C, wait for the saved-path message, then pass the artifact to `assert --record`.
 10. **Always report results after completion**: After finishing the automation task, you MUST proactively present the results to the user without waiting for them to ask. This includes: (1) the answer to the user's original question or the outcome of the requested task, (2) key data extracted or observed during execution, (3) screenshots and other generated files with their paths, (4) a brief summary of steps taken. Do NOT silently finish after the last automation command — the user expects complete results in a single interaction.
 11. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
