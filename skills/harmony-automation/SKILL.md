@@ -150,6 +150,14 @@ npx -y @midscene/harmony@1 assert --prompt "the settings screen shows Wi-Fi and 
 npx -y @midscene/harmony@1 assert --deviceId 0123456789ABCDEF --prompt "the app shows a successful login message"
 ```
 
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs.
+
+```bash
+npx -y @midscene/harmony@1 assert \
+  --prompt "the order confirmation screen is visible" \
+  --message "the order should be confirmed after tapping Pay"
+```
+
 When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/harmony@1.9.0+`.
 
 ```bash
@@ -275,6 +283,26 @@ npx -y @midscene/harmony@1 take_screenshot
 | Calculator | com.huawei.hmos.calculator |
 | Browser | com.huawei.hmos.browser |
 | Weather | com.huawei.hmos.weather |
+
+## Improve Precision (Deep Locate / Deep Think)
+
+Two optional global flags help when Midscene struggles with a task. Put them anywhere in the command (before or after the sub-command); once set, the relevant operations use them by default, so you don't pass a per-call parameter.
+
+- `--deep-locate` — spends an extra round of visual reasoning to pinpoint the target element. Use it when an action interacts with the wrong spot (location drift / offset). It applies to every operation that locates an element, including `tap --locate` and the locating that happens inside `act`.
+- `--deep-think` — plans `act` with deeper reasoning (richer context and sub-goal decomposition). Use it for complex, multi-step `act` instructions; it only affects planning.
+
+Both trade a little speed for better results, and you can combine them.
+
+```bash
+# more accurate element location (helps act's internal locating too)
+npx -y @midscene/harmony@1 act --deep-locate --prompt "tap the small back arrow in the top-left corner"
+
+# deeper planning for a complex, multi-step act
+npx -y @midscene/harmony@1 act --deep-think --prompt "scroll the settings list, open About device, and find the system version"
+
+# combine both
+npx -y @midscene/harmony@1 act --deep-locate --deep-think --prompt "open Settings, go to Wi-Fi, and toggle it on"
+```
 
 ## Troubleshooting
 

@@ -51,23 +51,20 @@ This skill has three modes. Choose based on the user's intent:
 
 **CDP vs Bridge**: Both control the user's real Chrome with login sessions preserved. CDP only needs a Chrome setting toggle; Bridge needs a Chrome Extension installed. If the user doesn't specify, prefer **CDP mode** as it has fewer prerequisites.
 
-### Precheck: detect available connection modes
+### Precheck: detect available CDP target
 
-Before using CDP or Bridge mode, run a quick precheck to verify the target is reachable. This avoids long timeouts when the user hasn't enabled remote debugging or installed the extension.
+Before using CDP mode, run a quick precheck to verify Chrome's remote debugging port is reachable. This avoids long timeouts when the user hasn't enabled remote debugging.
 
 ```bash
-# CDP precheck (port 9222, 2s timeout) — returns "101" if available
+# CDP precheck (port 9222, 2s timeout) — returns "101" if Chrome is listening for DevTools
 curl -s --max-time 2 -o /dev/null -w "%{http_code}" -H "Upgrade: websocket" -H "Connection: Upgrade" -H "Sec-WebSocket-Version: 13" -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" http://127.0.0.1:9222/devtools/browser
-
-# Bridge precheck (port 3766, 2s timeout) — returns "200" or "400" if extension is listening
-curl -s --max-time 2 -o /dev/null -w "%{http_code}" http://127.0.0.1:3766/socket.io/?EIO=4&transport=polling
 ```
 
-**How to use precheck results:**
-- CDP returns `101` → CDP mode is available, use `--cdp`
-- Bridge returns `200` or `400` → Bridge extension is listening, use `--bridge`
-- Both fail → Chrome may not be running. Try opening Chrome using a shell command appropriate for the current platform, wait 2-3 seconds, then re-run the precheck. If it still fails, fall back to Puppeteer mode or ask the user to check their Chrome settings.
-- Both available and user didn't specify → prefer CDP
+**How to use the precheck result:**
+- Returns `101` → CDP mode is available, use `--cdp`
+- Fails (curl exit 7 or HTTP `000`) → Chrome is not running with remote debugging enabled. Start Chrome with `--remote-debugging-port=9222`, wait 2-3 seconds, then re-run the precheck. If it still fails, fall back to Puppeteer mode (or use Bridge mode if the Midscene Chrome Extension is installed).
+
+> **Bridge mode has no usable precheck.** Despite port 3766 being involved, the bridge server is started **by the CLI** (`npx ... --bridge connect` opens 3766 itself); the extension is the **client** that hooks in. Checking 3766 before the CLI runs always returns nothing. Just run `--bridge connect` directly — its first log line (`waiting for bridge to connect...` → `one client connected`) tells you whether the extension picked it up.
 
 ## Prerequisites
 
@@ -129,6 +126,26 @@ npx -y @midscene/web@1 take_screenshot --cdp ws://127.0.0.1:9222/devtools/browse
 npx -y @midscene/web@1 disconnect --cdp ws://127.0.0.1:9222/devtools/browser
 ```
 
+### Custom HTTP Headers in CDP Mode
+
+When the user needs custom request headers in CDP mode, such as routing requests to a PPE environment, pass each header through a separate `--extra-http-header 'Name:Value'` option. Repeat the option to send multiple headers. Use the exact header names and values supplied by the user; do not guess environment names or authentication values.
+
+```bash
+npx -y @midscene/web@1 connect \
+  --cdp ws://127.0.0.1:9222/devtools/browser \
+  --extra-http-header 'x-use-ppe:1' \
+  --extra-http-header 'x-tt-env:ppe_example' \
+  --url https://example.com
+
+npx -y @midscene/web@1 act \
+  --cdp ws://127.0.0.1:9222/devtools/browser \
+  --extra-http-header 'x-use-ppe:1' \
+  --extra-http-header 'x-tt-env:ppe_example' \
+  --prompt "click the button"
+```
+
+Each CLI command creates a new CDP session. Repeat every required `--extra-http-header 'Name:Value'` option on each CDP command that may issue requests, including `connect`, `act`, and `assert`. Split each entry at the first colon, so values may contain additional colons. The headers are applied before `connect --url` navigates, so the initial document request includes them. Do not print header values in task summaries, and avoid putting sensitive authentication values directly in shell history.
+
 ### Important notes for CDP mode
 
 - The browser is managed externally — `disconnect` releases the connection but does NOT close the browser. There is no `close` command in CDP mode.
@@ -149,9 +166,11 @@ npx -y @midscene/web@1 --bridge disconnect
 
 ### Important notes for Bridge mode
 
-- The user must have Chrome open with the Midscene Extension installed and enabled.
+- The user must have Chrome (or any Chromium-based browser that supports Chrome extensions, e.g. Edge, Arc, Dia) open with the Midscene Extension installed and enabled.
 - Install the extension from Chrome Web Store: https://chromewebstore.google.com/detail/midscenejs/gbldofcpkknbggpkmbdaefngejllnief
-- Check that the "bridge mode" indicator in the extension shows "Listening" status.
+- **Handshake direction**: the **CLI is the server** (listens on `127.0.0.1:3766`); the **extension is the client** that connects to it. The "Listening" status shown in the extension panel means "ready to connect to a CLI", not that the extension itself opened a port. Practically: launch `--bridge connect` first; the extension will hook in within a second or two.
+- **Active tab must be a normal web page.** The extension cannot operate `chrome://`, `chrome-extension://`, the Chrome Web Store, or other privileged URLs. If the active tab is one of those, the CLI will return `Cannot access a chrome:// URL`. Ask the user to switch to a regular `http(s)://` tab before reconnecting.
+- `connect` without `--url` attaches to the current active tab; `connect --url <href>` navigates that tab. The CLI does not open new tabs in bridge mode.
 - `disconnect` only closes the CLI-side bridge connection, not the browser or tabs.
 - If the extension is not installed, guide the user to install it or suggest switching to CDP mode instead.
 - See the [Bridge Mode documentation](https://midscenejs.com/bridge-mode-by-chrome-extension.html).
@@ -199,6 +218,14 @@ In CDP or Bridge mode, pass the same connection flags you use for other commands
 ```bash
 npx -y @midscene/web@1 assert --cdp ws://127.0.0.1:9222/devtools/browser --prompt "the dashboard is loaded"
 npx -y @midscene/web@1 --bridge assert --prompt "the profile page shows the user's avatar"
+```
+
+By default a failed assertion throws an AI-generated reason. Pass `--message` to throw a custom error message instead, which is useful for surfacing the intended outcome in QA and CI logs.
+
+```bash
+npx -y @midscene/web@1 assert \
+  --prompt "the checkout page shows an order confirmation" \
+  --message "the order should be confirmed after clicking Pay"
 ```
 
 When the assertion needs to compare against a reference image (icon, logo, screenshot), pass `--image` for the URL/path and `--image-name` for its display name. Each `--image` may be an http(s) link, a `data:` URI, or a local file path. Repeat both flags in matching order when you need to attach more than one image. Add `--convertHttpImage2Base64 true` when the model cannot reach the URL directly. Requires `@midscene/web@1.9.0+`.
@@ -325,6 +352,28 @@ npx -y @midscene/web@1 take_screenshot
 npx -y @midscene/web@1 act --prompt "fill in the email field with 'user@example.com' and the password field with 'pass123', then click the Log In button"
 npx -y @midscene/web@1 take_screenshot
 ```
+
+## Improve Precision (Deep Locate / Deep Think)
+
+Two optional global flags help when Midscene struggles with a task. Put them anywhere in the command (before or after the sub-command); once set, the relevant operations use them by default, so you don't pass a per-call parameter.
+
+- `--deep-locate` — spends an extra round of visual reasoning to pinpoint the target element. Use it when an action interacts with the wrong spot (location drift / offset). It applies to every operation that locates an element, including `tap --locate` and the locating that happens inside `act`.
+- `--deep-think` — plans `act` with deeper reasoning (richer context and sub-goal decomposition). Use it for complex, multi-step `act` instructions; it only affects planning.
+
+Both trade a little speed for better results, and you can combine them.
+
+```bash
+# more accurate element location (helps act's internal locating too)
+npx -y @midscene/web@1 act --deep-locate --prompt "click the tiny gear icon in the top-right toolbar"
+
+# deeper planning for a complex, multi-step act
+npx -y @midscene/web@1 act --deep-think --prompt "complete the multi-step checkout form"
+
+# combine both
+npx -y @midscene/web@1 act --deep-locate --deep-think --prompt "open the settings menu, go to Preferences, and enable dark mode"
+```
+
+In CDP or Bridge mode, keep your usual `--cdp` / `--bridge` flags alongside these.
 
 ## Troubleshooting
 
