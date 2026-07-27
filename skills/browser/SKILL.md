@@ -250,28 +250,23 @@ npx -y @midscene/web@1 assert \
   --image "./fixtures/header.png" --image-name "header"
 ```
 
-### Observe Transient UI During an Action
+### Record and Assert Transient UI
 
-Use `observe` when the state you need to verify may appear and disappear while an action is running, such as a toast, loading banner, animation, or screen transition. It starts observation, runs the action, stops observation, and checks the assertion in one CLI invocation:
+Use a recording when the state to verify may disappear before a current-screen assertion runs, such as a toast, loading banner, animation, or transition. Keep recording, actions, and assertion separate:
 
 ```bash
-npx -y @midscene/web@1 observe \
-  --action "click the Submit button" \
+npx -y @midscene/web@1 record start --session submission
+npx -y @midscene/web@1 act --prompt "click the Submit button"
+npx -y @midscene/web@1 record end --session submission \
+  --output ./submission-observation.json
+npx -y @midscene/web@1 assert \
+  --record ./submission-observation.json \
   --prompt "a success toast appeared during submission"
 ```
 
-In CDP or Bridge mode, pass the same connection flags:
+Pass the normal target flags to `record start`, actions, and the final `assert`. The managed recording worker keeps its own connection until `record end`; invoke each command synchronously and never add shell `&`. In CDP mode, for example, repeat `--cdp ws://127.0.0.1:9222/devtools/browser` on `record start`, actions, and `assert`. In Bridge mode, the recording worker owns the single Bridge connection, so interact manually between `record start` and `record end` instead of starting a second Bridge CLI command.
 
-```bash
-npx -y @midscene/web@1 observe --cdp ws://127.0.0.1:9222/devtools/browser \
-  --action "click Save" \
-  --prompt "a saved confirmation appeared"
-npx -y @midscene/web@1 --bridge observe \
-  --action "click Save" \
-  --prompt "a saved confirmation appeared"
-```
-
-Do not split observation into separate start/stop commands: the observer only exists inside this one invocation. Optional tuning flags are `--interval-ms`, `--max-frames`, and `--watchdog-ms`. Observed assertions send multiple frames to the model, so use ordinary `assert` when only the current or final page state matters.
+Only one recording can be active for the same platform and working directory. Optional capture flags on `record start` are `--interval-ms`, `--max-frames`, and `--watchdog-ms`; the default watchdog finalizes the recording after five minutes, while `--watchdog-ms 0` disables that safety limit. The output is a versioned JSON sequence of ordered screenshots, not an encoded video. Use ordinary `assert` without `--record` when only the current page matters.
 
 ### Use a Reference Image for Precise Targeting
 
@@ -326,7 +321,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 
 1. **Connect** to a URL to open a new tab
 2. **Take screenshot** to see the current state, make sure the page is loaded.
-3. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting page state, or `observe` when a transient state must be verified during the action.
+3. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting page state, or wrap transient-state workflows with `record start` / `record end` and then use `assert --record`.
 4. **Close** the browser when done (or **disconnect** to keep it for later)
 5. **Report results** — summarize what was accomplished, present key findings and data extracted during the task, and list any generated files (screenshots, logs, etc.) with their paths
 
@@ -336,7 +331,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 2. **Inspect visible state**: After navigation or actions that trigger page changes, take a screenshot and read it before deciding the next step.
 3. **Use natural, specific prompts**: Describe visible UI and desired outcomes, such as `"click the blue Submit button in the contact form"`, not selectors like `"#submit"`.
 4. **Batch related operations into a single `act` command**: For example, fill the email and password fields, then click Log In in one prompt. Use separate commands when you need to inspect the intermediate state.
-5. **Choose the right verification window**: Use `assert --prompt "..."` for the current or final page state. Use `observe --action "..." --prompt "..."` when a toast, banner, animation, or transition may disappear before a separate assertion runs.
+5. **Choose the right verification window**: Use `assert --prompt "..."` for the current page. For a toast, banner, animation, or transition, run `record start`, perform the interaction, run `record end`, then pass the saved artifact to `assert --record`.
 6. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
 **Example — Dropdown selection:**
