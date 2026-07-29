@@ -9,7 +9,7 @@ description: |
   Use this skill when the user wants to:
   - Browse, navigate, or open web pages
   - Scrape, extract, or collect data from websites
-  - Fill out forms, click buttons, or interact with web elements
+  - Fill out forms, upload local files, click buttons, or interact with web elements
   - Verify, validate, test, or QA frontend UI behavior
   - Take screenshots of web pages
   - Automate multi-step web workflows
@@ -202,6 +202,16 @@ npx -y @midscene/web@1 act --prompt "scroll down and click the Submit button"
 
 # or target-driven instructions
 npx -y @midscene/web@1 act --prompt "click the country dropdown and select Japan"
+```
+
+### Upload Files
+
+When a prompt asks Midscene to upload files, `act` requires an explicit `--file-chooser-allowed-dir`. Use the smallest directory that contains the test fixtures; do not grant the project root or a home directory. Refer to files by paths relative to that directory in the prompt.
+
+```bash
+npx -y @midscene/web@1 act \
+  --file-chooser-allowed-dir ./fixtures \
+  --prompt "click the upload button and upload avatar.png"
 ```
 
 ### Assert Current Page State

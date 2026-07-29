@@ -79,6 +79,17 @@ await ctx.agent.aiAct('verify the page shows "Login successful"');
 await ctx.agent.aiAct('verify the error message is visible');
 ```
 
+### Prompt-driven File Uploads (Web only)
+
+When an `aiAct` prompt asks Midscene to upload files, pass `fileChooserAllowedDir` explicitly. Use the smallest directory containing that test case's fixtures, and refer to files relative to it in the prompt. Do not use the project root or a home directory. Replace `./fixtures` below with the fixture directory relative to the test process working directory.
+
+```typescript
+await ctx.agent.aiAct(
+  'click the upload button and upload avatar.png',
+  { fileChooserAllowedDir: './fixtures' },
+);
+```
+
 **Phase splitting:** If the task prompt is too long or covers multiple distinct stages, split it into separate `aiAct` calls — one per phase. Each phase should be a self-contained logical step, and all phases combined must match the user's original intent.
 
 ```typescript
