@@ -79,21 +79,16 @@ await ctx.agent.aiAct('verify the page shows "Login successful"');
 await ctx.agent.aiAct('verify the error message is visible');
 ```
 
-#### Upload local files in Web tests
+### Prompt-driven File Uploads (Web only)
 
-Prompt-based file uploads work only with the Web agent. Resolve each file path before adding it to the prompt.
+When an `aiAct` prompt asks Midscene to upload files, pass `fileChooserAllowedDir` explicitly. Use the smallest directory containing that test case's fixtures, and refer to files relative to it in the prompt. Do not use the project root or a home directory. Replace `./fixtures` below with the fixture directory relative to the test process working directory.
 
 ```typescript
-import { resolve } from 'node:path';
-
-const avatarPath = resolve('e2e/fixtures/avatar.png');
-
 await ctx.agent.aiAct(
-  `click the "Upload avatar" button and upload ${avatarPath}`,
+  'click the upload button and upload avatar.png',
+  { fileChooserAllowedDir: './fixtures' },
 );
 ```
-
-For multiple uploads in one `aiAct`, pair each path with the action that opens its file chooser. Do not combine prompt paths with `fileChooserAccept`. A later planned upload can replace the configured files.
 
 **Phase splitting:** If the task prompt is too long or covers multiple distinct stages, split it into separate `aiAct` calls — one per phase. Each phase should be a self-contained logical step, and all phases combined must match the user's original intent.
 

@@ -184,19 +184,15 @@ npx -y @midscene/web@1 act --prompt "scroll down and click the Submit button"
 npx -y @midscene/web@1 act --prompt "click the country dropdown and select Japan"
 ```
 
-### Upload local files
+### Upload Files
 
-Include the exact local file path in the `act` prompt. Use an absolute path. Relative paths resolve from the directory where you run the command.
+When a prompt asks Midscene to upload files, `act` requires an explicit `--file-chooser-allowed-dir`. Use the smallest directory that contains the test fixtures; do not grant the project root or a home directory. Refer to files by paths relative to that directory in the prompt.
 
 ```bash
-avatar_path=/absolute/path/to/avatar.png
 npx -y @midscene/web@1 act \
-  --prompt "click the Upload avatar button and upload $avatar_path"
+  --file-chooser-allowed-dir ./fixtures \
+  --prompt "click the upload button and upload avatar.png"
 ```
-
-For multiple uploads, pair each path with the action that opens its file chooser. Midscene replaces the previous file chooser configuration before the next upload.
-
-This works in Puppeteer, CDP, and Bridge modes.
 
 ### Assert Current Page State
 
