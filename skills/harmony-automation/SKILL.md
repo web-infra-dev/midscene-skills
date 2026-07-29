@@ -182,7 +182,7 @@ npx -y @midscene/harmony@1 assert \
 
 ### Use a Reference Image for Precise Targeting
 
-When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
+When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, use `tap --locate` for a single tap on that target. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
 
 ```bash
 npx -y @midscene/harmony@1 tap --locate '{
@@ -198,6 +198,18 @@ npx -y @midscene/harmony@1 tap --locate '{
 ```
 
 The same `locate` JSON shape also works for other commands that accept a `locate` parameter.
+
+`act` and `assert` take reference images too, via repeatable `--image` / `--image-name` pairs. Use them when the task needs more than one step, or when the assertion itself compares against the image:
+
+```bash
+npx -y @midscene/harmony@1 act \
+  --prompt "tap the icon matching the reference image named 'target image', then confirm in the dialog" \
+  --image "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" \
+  --image-name "target image" \
+  --convert-http-image2-base64 true
+```
+
+Every `--image` needs a matching `--image-name`, and the prompt should refer to the image by that name — that name is how the model connects your wording to the picture. A local file path or a base64 data URI works in `--image` as well.
 
 ### Disconnect
 
@@ -234,7 +246,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 5. **Batch related operations into a single `act` command**: When performing consecutive operations within the same app, combine them into one `act` prompt instead of splitting them into separate commands. For example, "open Settings, tap Wi-Fi, and toggle it on" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
 6. **Use `assert` for verification**: When the goal is to confirm that a screen state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the permission dialog is visible"` or `"the Save button is disabled"`.
 7. **Summarize report files after completion**: After finishing the automation task, collect and summarize all report files (screenshots, logs, output files, etc.) for the user. Present a clear summary of what was accomplished, what files were generated, and where they are located, making it easy for the user to review the results.
-8. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
+8. **Use reference images when the user provides one**: For a single tap on that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }`. For a multi-step action or an assertion against the image, pass `--image` / `--image-name` to `act` or `assert` instead.
 
 **Example — App launch and interaction:**
 
