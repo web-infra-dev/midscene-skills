@@ -83,6 +83,8 @@ await ctx.agent.aiAct('verify the error message is visible');
 
 When an `aiAct` prompt asks Midscene to upload files, pass `fileChooserAllowedDir` explicitly. Use the smallest directory containing that test case's fixtures, and refer to files relative to it in the prompt. Do not use the project root or a home directory. Replace `./fixtures` below with the fixture directory relative to the test process working directory.
 
+If the test runs through Chrome extension Bridge mode, local file uploads also require the Midscene extension's "Allow access to file URLs" permission. Enable it in `chrome://extensions` > Midscene > "Details", then reconnect Bridge mode from the target `http(s)://` page.
+
 ```typescript
 await ctx.agent.aiAct(
   'click the upload button and upload avatar.png',
