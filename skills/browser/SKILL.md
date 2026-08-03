@@ -170,6 +170,7 @@ npx -y @midscene/web@1 --bridge disconnect
 - Install the extension from Chrome Web Store: https://chromewebstore.google.com/detail/midscenejs/gbldofcpkknbggpkmbdaefngejllnief
 - **Handshake direction**: the **CLI is the server** (listens on `127.0.0.1:3766`); the **extension is the client** that connects to it. The "Listening" status shown in the extension panel means "ready to connect to a CLI", not that the extension itself opened a port. Practically: launch `--bridge connect` first; the extension will hook in within a second or two.
 - **Active tab must be a normal web page.** The extension cannot operate `chrome://`, `chrome-extension://`, the Chrome Web Store, or other privileged URLs. If the active tab is one of those, the CLI will return `Cannot access a chrome:// URL`. Ask the user to switch to a regular `http(s)://` tab before reconnecting.
+- **File upload permission**: local file uploads in Bridge mode require the Midscene extension's "Allow access to file URLs" permission. Ask the user to open `chrome://extensions`, find Midscene, click "Details", enable the switch, then switch back to the target `http(s)://` tab before reconnecting. If upload fails with a permission or `Not allowed` error, check this first.
 - `connect` without `--url` attaches to the current active tab; `connect --url <href>` navigates that tab. The CLI does not open new tabs in bridge mode.
 - `disconnect` only closes the CLI-side bridge connection, not the browser or tabs.
 - If the extension is not installed, guide the user to install it or suggest switching to CDP mode instead.
@@ -207,6 +208,8 @@ npx -y @midscene/web@1 act --prompt "click the country dropdown and select Japan
 ### Upload Files
 
 When a prompt asks Midscene to upload files, `act` requires an explicit `--file-chooser-allowed-dir`. Use the smallest directory that contains the test fixtures; do not grant the project root or a home directory. Refer to files by paths relative to that directory in the prompt.
+
+In Bridge mode, also confirm the Midscene extension has "Allow access to file URLs" enabled in `chrome://extensions` > Midscene > "Details", and reconnect from the target `http(s)://` tab after changing the switch.
 
 ```bash
 npx -y @midscene/web@1 act \
