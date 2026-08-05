@@ -180,6 +180,28 @@ npx -y @midscene/harmony@1 assert \
   --image "./fixtures/header.png" --image-name "header"
 ```
 
+### Record and Assert Transient UI
+
+Use a recording when the state to verify may disappear before a current-screen assertion runs, such as a toast, loading banner, animation, or transition:
+
+```bash
+# Terminal 1: keep this foreground command running
+npx -y @midscene/harmony@1 record start \
+  --device-id 0123456789ABCDEF \
+  --output ./submission-observation.json
+
+# Terminal 2, while Terminal 1 records
+npx -y @midscene/harmony@1 act --device-id 0123456789ABCDEF \
+  --prompt "tap the Submit button"
+
+# Send Ctrl+C to Terminal 1 and wait for the saved-path message, then assert
+npx -y @midscene/harmony@1 assert --device-id 0123456789ABCDEF \
+  --record ./submission-observation.json \
+  --prompt "a success toast appeared during submission"
+```
+
+Pass target flags, capture flags, and `--output` to `record start`, then wait for `Recording. Press Ctrl+C to stop and save.` Keep the recorder as a foreground process in its dedicated terminal; never add shell `&`. Perform the interaction manually or from a second terminal, send Ctrl+C to the recorder, and wait until it prints the saved path before asserting. HarmonyOS recording uses periodic screenshots. Optional capture flags are `--interval-ms`, `--max-frames`, and `--watchdog-ms`; `--max-frames` caps sampled frames, and the manifest may contain one additional final representative frame. The default watchdog finalizes and saves the recording after five minutes, while `--watchdog-ms 0` disables that safety limit. The output is a JSON manifest plus an adjacent `<name>.frames` image directory, not an encoded video or archive. The manifest contains relative JPEG/PNG paths and no base64 image bodies. Keep or move the JSON file and image directory together, and pass the JSON path to `assert --record`. Use ordinary `assert` without `--record` when only the current screen matters.
+
 ### Use a Reference Image for Precise Targeting
 
 When the user provides a screenshot, icon, logo, or reference image and wants an exact visual match, prefer `tap --locate` instead of a generic `act --prompt`. Pass `--locate` as JSON. The `prompt` describes the target, `images` supplies named reference images, and `convertHttpImage2Base64: true` is useful when the image URL may not be directly accessible to the model.
@@ -222,7 +244,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 
 1. **Connect** to establish a session
 2. **Launch the target app and take screenshot** to see the current state, make sure the app is launched and visible on the screen.
-3. **Execute action** using `act` to perform the desired action or target-driven instructions, and use `assert` when you need to verify the resulting screen state.
+3. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting screen state, or keep `record start --output ...` running in a dedicated terminal during transient-state workflows, stop it with Ctrl+C, and then use `assert --record`.
 4. **Disconnect** when done
 
 ## Best Practices
@@ -232,7 +254,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 3. **Describe locations when possible**: Help target elements by describing their position (e.g., `"the search icon at the top right"`, `"the third item in the list"`).
 4. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
 5. **Batch related operations into a single `act` command**: When performing consecutive operations within the same app, combine them into one `act` prompt instead of splitting them into separate commands. For example, "open Settings, tap Wi-Fi, and toggle it on" should be a single `act` call, not three. This reduces round-trips, avoids unnecessary screenshot-analyze cycles, and is significantly faster.
-6. **Use `assert` for verification**: When the goal is to confirm that a screen state is true, use `assert --prompt "..."` instead of an `act` prompt. Keep assertions observable and specific, such as `"the permission dialog is visible"` or `"the Save button is disabled"`.
+6. **Choose the right verification window**: Use `assert --prompt "..."` for the current screen. For a toast, banner, animation, or transition, run `record start --output ...` in a dedicated terminal, perform the interaction, stop recording with Ctrl+C, wait for the saved-path message, then pass the artifact to `assert --record`.
 7. **Summarize report files after completion**: After finishing the automation task, collect and summarize all report files (screenshots, logs, output files, etc.) for the user. Present a clear summary of what was accomplished, what files were generated, and where they are located, making it easy for the user to review the results.
 8. **Prefer `tap --locate` when a reference image is provided**: If the user shares a screenshot, icon, or logo and wants that exact visual target, use `tap --locate` with a multimodal `locate` JSON object such as `{ "prompt": "...", "images": [...] }` instead of relying only on `act --prompt`.
 
