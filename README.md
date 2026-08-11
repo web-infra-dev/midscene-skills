@@ -16,6 +16,7 @@
   - iOS (controlled via WebDriverAgent): [`skills/ios-automation`](skills/ios-automation)
   - HarmonyOS (controlled via HDC): [`skills/harmony-automation`](skills/harmony-automation)
   - Vitest + Midscene E2E (scaffold, convert, and manage AI-powered E2E tests for Web, Android, iOS): [`skills/vitest-midscene-e2e`](skills/vitest-midscene-e2e)
+  - Midscene report analysis (validate passed and failed results, identify false-pass/false-fail outcomes, and trace root causes): [`skills/midscene-report-analysis`](skills/midscene-report-analysis)
 
 
 ## Safety Warning
@@ -100,6 +101,10 @@ Use Midscene computer skill to open the Keynote app and create a new presentatio
 
 ```
 Use Midscene browser skill to open the Google search page and search for "Midscene".
+```
+
+```
+Use Midscene report analysis skill to analyze /absolute/path/to/midscene-report.html.
 ```
 
 ## Issues
