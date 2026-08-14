@@ -249,7 +249,7 @@ Since CLI commands are stateless between invocations, follow this pattern:
 
 ## Best Practices
 
-1. **Bring the target app to the foreground before using this skill**: For best efficiency, launch the app using HDC (e.g., `hdc shell aa start -a EntryAbility -b <bundleName>`) **before** invoking any midscene commands. Then take a screenshot to confirm the app is actually in the foreground. Only after visual confirmation should you proceed with UI automation using this skill. HDC commands are significantly faster than using midscene to navigate to and open apps.
+1. **Bring the target app to the foreground before interacting with it**: After connecting, use the dedicated launcher (for example, `npx -y @midscene/harmony@1 launch --uri <bundleName>`), then take a screenshot to confirm the app is actually in the foreground. Do not call `aa start` with a guessed ability name because HarmonyOS apps may declare different entry abilities. Only after visual confirmation should you proceed with UI automation using this skill.
 2. **Be specific about UI elements**: Instead of vague descriptions, provide clear, specific details. Say `"the Wi-Fi toggle switch on the right side"` instead of `"the toggle"`.
 3. **Describe locations when possible**: Help target elements by describing their position (e.g., `"the search icon at the top right"`, `"the third item in the list"`).
 4. **Never run in background**: Every midscene command must run synchronously — background execution breaks the screenshot-analyze-act loop.
@@ -261,8 +261,8 @@ Since CLI commands are stateless between invocations, follow this pattern:
 **Example — App launch and interaction:**
 
 ```bash
-hdc shell aa start -a EntryAbility -b com.huawei.hmos.settings
 npx -y @midscene/harmony@1 connect
+npx -y @midscene/harmony@1 launch --uri com.huawei.hmos.settings
 npx -y @midscene/harmony@1 take_screenshot
 npx -y @midscene/harmony@1 act --prompt "scroll down the settings list and tap About device"
 npx -y @midscene/harmony@1 take_screenshot
