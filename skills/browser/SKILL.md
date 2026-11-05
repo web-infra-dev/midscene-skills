@@ -188,24 +188,24 @@ npx -y @midscene/web@1 connect --url https://example.com
 
 Use `tabs` to list open tabs and `switch-tab --id <id>` to select an existing tab without navigating or reloading it. Before using this workflow, check `npx -y @midscene/web@1 --help` for both commands. If they are missing, use a CLI release that includes tab management before proceeding. Bridge mode also requires an updated Midscene Chrome extension.
 
-Save the parent tab's ID before clicking a link that opens a child tab. Run each command separately and read its output before continuing:
+Save the original tab's ID before clicking a link that opens a new tab. Run each command separately and read its output before continuing:
 
 ```bash
 npx -y @midscene/web@1 tabs
 npx -y @midscene/web@1 act --prompt "click the link that opens the details in a new tab"
 npx -y @midscene/web@1 tabs
-npx -y @midscene/web@1 switch-tab --id <child-tab-id>
+npx -y @midscene/web@1 switch-tab --id <new-tab-id>
 npx -y @midscene/web@1 take_screenshot
-# After completing the task in the child tab, return to the saved parent:
-npx -y @midscene/web@1 switch-tab --id <parent-tab-id>
+# After completing the task in the new tab, return to the original tab:
+npx -y @midscene/web@1 switch-tab --id <original-tab-id>
 npx -y @midscene/web@1 take_screenshot
 ```
 
-`tabs` returns a JSON array with `id`, `title`, `url`, and `active`. Save the ID marked `active` as the parent, then identify the child from the new list using its title and URL. Replace the placeholders above with the returned IDs; do not guess IDs or assume the last tab is the child. If the new tab has not appeared yet, wait briefly and list again.
+`tabs` returns a JSON array with `id`, `title`, `url`, and `active`. Save the ID marked `active` as the original tab ID, then identify the newly opened tab in the updated list using its title and URL. Replace the placeholders above with the returned IDs; do not guess IDs or assume the last tab is the new tab. If the new tab has not appeared yet, wait briefly and list again.
 
 Keep the same connection mode on every command: add `--cdp <ws-endpoint>` in CDP mode or `--bridge` in Bridge mode. Default Puppeteer and CDP modes keep using the selected tab across CLI calls and do not automatically switch to newly opened tabs. Bridge switching activates the tab in the current Chrome window; subsequent commands attach to the foreground tab, so manually switching tabs changes the next command's target.
 
-Switching preserves the existing page state. Do not use `connect --url` or browser Back to return to the parent. If an ID is missing or closed, the command fails: list tabs again and select an available target. `disconnect` releases the connection; `close` in Puppeteer mode closes the entire browser, including the parent and child tabs.
+Switching preserves the existing page state. Do not use `connect --url` or browser Back to return to the original tab. If an ID is missing or closed, the command fails: list tabs again and select an available target. `disconnect` releases the connection; `close` in Puppeteer mode closes the entire browser, including the original and new tabs.
 
 ### Take Screenshot
 
