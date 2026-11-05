@@ -171,7 +171,7 @@ npx -y @midscene/web@1 --bridge disconnect
 - **Handshake direction**: the **CLI is the server** (listens on `127.0.0.1:3766`); the **extension is the client** that connects to it. The "Listening" status shown in the extension panel means "ready to connect to a CLI", not that the extension itself opened a port. Practically: launch `--bridge connect` first; the extension will hook in within a second or two.
 - **Active tab must be a normal web page.** The extension cannot operate `chrome://`, `chrome-extension://`, the Chrome Web Store, or other privileged URLs. If the active tab is one of those, the CLI will return `Cannot access a chrome:// URL`. Ask the user to switch to a regular `http(s)://` tab before reconnecting.
 - **File upload permission**: local file uploads in Bridge mode require the Midscene extension's "Allow access to file URLs" permission. Ask the user to open `chrome://extensions`, find Midscene, click "Details", enable the switch, then switch back to the target `http(s)://` tab before reconnecting. If upload fails with a permission or `Not allowed` error, check this first.
-- `connect` without `--url` attaches to the current active tab; `connect --url <href>` navigates that tab. The CLI does not open new tabs in bridge mode.
+- `connect` without `--url` attaches to the current active tab; `connect --url <href>` opens a new tab at that URL. Use `switch-tab` to return to an existing tab without navigating.
 - `disconnect` only closes the CLI-side bridge connection, not the browser or tabs.
 - If the extension is not installed, guide the user to install it or suggest switching to CDP mode instead.
 - See the [Bridge Mode documentation](https://midscenejs.com/bridge-mode-by-chrome-extension.html).
@@ -183,6 +183,29 @@ npx -y @midscene/web@1 --bridge disconnect
 ```bash
 npx -y @midscene/web@1 connect --url https://example.com
 ```
+
+### Switch Browser Tabs
+
+Use `tabs` to list open tabs and `switch-tab --id <id>` to select an existing tab without navigating or reloading it. Before using this workflow, check `npx -y @midscene/web@1 --help` for both commands. If they are missing, use a CLI release that includes tab management before proceeding. Bridge mode also requires an updated Midscene Chrome extension.
+
+Save the original tab's ID before clicking a link that opens a new tab. Run each command separately and read its output before continuing:
+
+```bash
+npx -y @midscene/web@1 tabs
+npx -y @midscene/web@1 act --prompt "click the link that opens the details in a new tab"
+npx -y @midscene/web@1 tabs
+npx -y @midscene/web@1 switch-tab --id <new-tab-id>
+npx -y @midscene/web@1 take_screenshot
+# After completing the task in the new tab, return to the original tab:
+npx -y @midscene/web@1 switch-tab --id <original-tab-id>
+npx -y @midscene/web@1 take_screenshot
+```
+
+`tabs` returns a JSON array with `id`, `title`, `url`, and `active`. Save the ID marked `active` as the original tab ID, then identify the newly opened tab in the updated list using its title and URL. Replace the placeholders above with the returned IDs; do not guess IDs or assume the last tab is the new tab. If the new tab has not appeared yet, wait briefly and list again.
+
+Keep the same connection mode on every command: add `--cdp <ws-endpoint>` in CDP mode or `--bridge` in Bridge mode. Default Puppeteer and CDP modes keep using the selected tab across CLI calls and do not automatically switch to newly opened tabs. Bridge switching activates the tab in the current Chrome window; subsequent commands attach to the foreground tab, so manually switching tabs changes the next command's target.
+
+Switching preserves the existing page state. Do not use `connect --url` or browser Back to return to the original tab. If an ID is missing or closed, the command fails: list tabs again and select an available target. `disconnect` releases the connection; `close` in Puppeteer mode closes the entire browser, including the original and new tabs.
 
 ### Take Screenshot
 
@@ -336,7 +359,7 @@ npx -y @midscene/web@1 report-tool --action split --htmlPath ./midscene_run/repo
 
 The browser **persists across CLI calls** via a background Chrome process. Follow this pattern:
 
-1. **Connect** to a URL to open a new tab
+1. **Connect** to the target page using the chosen mode. Use `connect` without `--url` to attach to an existing page in CDP or Bridge mode.
 2. **Take screenshot** to see the current state, make sure the page is loaded.
 3. **Execute action** using `act` to perform the desired action or target-driven instructions. Use `assert` for the resulting page state, or keep `record start --output ...` running in a dedicated terminal during transient-state workflows, stop it with Ctrl+C, and then use `assert --record`.
 4. **Close** the browser when done (or **disconnect** to keep it for later)
@@ -344,7 +367,7 @@ The browser **persists across CLI calls** via a background Chrome process. Follo
 
 ## Best Practices
 
-1. **Always connect first**: Navigate to the target URL with `connect --url` before any interaction.
+1. **Connect before interacting**: Use `connect --url` for a target URL, or `connect` without `--url` to attach to an existing page in CDP or Bridge mode. During a multi-tab task, use `tabs` and `switch-tab` to select the page while preserving its state.
 2. **Inspect visible state**: After navigation or actions that trigger page changes, take a screenshot and read it before deciding the next step.
 3. **Use natural, specific prompts**: Describe visible UI and desired outcomes, such as `"click the blue Submit button in the contact form"`, not selectors like `"#submit"`.
 4. **Batch related operations into a single `act` command**: For example, fill the email and password fields, then click Log In in one prompt. Use separate commands when you need to inspect the intermediate state.
